@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { ChatDisplayMessage } from '../domain/chat/types'
 import { canSendChatText } from '../domain/chat/chatHistory'
 import Button from './Button'
@@ -32,7 +32,7 @@ function ChatPanel({ messages, onSend, disabled = false }: ChatPanelProps) {
     setDraft('')
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Enter') {
       event.preventDefault()
       submitMessage()

@@ -18,7 +18,7 @@ export function canSendChatText(text: string): boolean {
 
 export function createChatP2PMessage(
   text: string,
-  id = crypto.randomUUID(),
+  id: string = crypto.randomUUID(),
   sentAt = Date.now(),
 ): Extract<P2PMessage, { type: 'chat' }> {
   return {
