@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom'
+import CharacterBoard from '../components/CharacterBoard'
 import styles from './PlayPage.module.css'
 
 function PlayPage() {
@@ -12,9 +13,12 @@ function PlayPage() {
           Room code: <strong>{roomCode}</strong>
         </p>
         <p className={styles.hint}>
-          Game setup coming soon. Share this link with your opponent to play
-          together.
+          Preview the character board below. Flip tiles to eliminate suspects,
+          or use selection mode when choosing a mystery person.
         </p>
+      </section>
+      <section className={styles.boardSection}>
+        <CharacterBoard />
       </section>
     </main>
   )
