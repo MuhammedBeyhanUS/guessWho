@@ -17,6 +17,16 @@ function renderHostPlayPage(roomCode = 'ABC234') {
   )
 }
 
+function renderGuestPlayPage(roomCode = 'ABC234') {
+  return render(
+    <MemoryRouter initialEntries={[`/play/${roomCode}`]}>
+      <Routes>
+        <Route path="/play/:roomCode" element={<PlayPage />} />
+      </Routes>
+    </MemoryRouter>,
+  )
+}
+
 describe('PlayPage host create view', () => {
   afterEach(() => {
     vi.restoreAllMocks()
@@ -53,5 +63,18 @@ describe('PlayPage host create view', () => {
       )
     })
     expect(screen.getByRole('status')).toHaveTextContent('Link copied!')
+  })
+})
+
+describe('PlayPage guest join view', () => {
+  it('shows Connecting state when opened directly without isHost', () => {
+    renderGuestPlayPage('XYZ789')
+
+    expect(screen.getByText('XYZ789')).toBeInTheDocument()
+    expect(screen.getByText(/connecting/i)).toBeInTheDocument()
+    expect(screen.getByText(/joining room/i)).toBeInTheDocument()
+    expect(
+      screen.queryByText(/preview the character board/i),
+    ).not.toBeInTheDocument()
   })
 })

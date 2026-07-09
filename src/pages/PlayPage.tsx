@@ -76,20 +76,22 @@ function PlayPage() {
             </p>
           </div>
         ) : (
-          <>
+          <div className={styles.guestView}>
             <p className={styles.message}>
               Room code: <strong>{roomCode}</strong>
             </p>
-            <p className={styles.hint}>
-              Preview the character board below. Flip tiles to eliminate
-              suspects, or use selection mode when choosing a mystery person.
+            <p className={styles.connecting}>Connecting…</p>
+            <p className={styles.connectionStatus}>
+              Connection status: joining room
             </p>
-          </>
+          </div>
         )}
       </section>
-      <section className={styles.boardSection}>
-        <CharacterBoard />
-      </section>
+      {isHost ? (
+        <section className={styles.boardSection}>
+          <CharacterBoard />
+        </section>
+      ) : null}
     </main>
   )
 }

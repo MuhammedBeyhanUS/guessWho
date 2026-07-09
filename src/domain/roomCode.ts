@@ -7,6 +7,30 @@ export const ROOM_CODE_PATTERN = new RegExp(
   `^[${ROOM_CODE_CHARSET}]{${ROOM_CODE_LENGTH}}$`,
 )
 
+export type RoomCodeValidationResult =
+  { ok: true; code: string } | { ok: false; message: string }
+
+export function validateRoomCode(code: string): RoomCodeValidationResult {
+  const normalized = code.trim().toUpperCase()
+
+  if (normalized.length !== ROOM_CODE_LENGTH) {
+    return {
+      ok: false,
+      message: `Room code must be exactly ${ROOM_CODE_LENGTH} characters.`,
+    }
+  }
+
+  if (!ROOM_CODE_PATTERN.test(normalized)) {
+    return {
+      ok: false,
+      message:
+        'Room code may only use letters A–Z and digits 2–9 (no 0, O, 1, or I).',
+    }
+  }
+
+  return { ok: true, code: normalized }
+}
+
 export function generateRoomCode(): string {
   const values = new Uint8Array(ROOM_CODE_LENGTH)
   crypto.getRandomValues(values)
