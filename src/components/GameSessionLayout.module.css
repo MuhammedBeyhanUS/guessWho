@@ -1,0 +1,251 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 1rem 1.25rem 1.5rem;
+  gap: 1rem;
+  position: relative;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 1.5rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.roleBadge {
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+}
+
+.roleBadge[data-role='host'] {
+  color: #364fc7;
+  background: #edf2ff;
+}
+
+.roleBadge[data-role='guest'] {
+  color: #2b8a3e;
+  background: #ebfbee;
+}
+
+.roomCode {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #4a4a6a;
+}
+
+.sessionBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.boardPanel {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.opponentPanel,
+.chatPanel,
+.voiceBar {
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 16px rgba(26, 26, 46, 0.06);
+}
+
+.panelTitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7a7a9a;
+}
+
+.opponentRole {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.connectionIndicator {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #7a7a9a;
+}
+
+.connectionIndicator[data-state='connected'] {
+  color: #2f9e44;
+  font-weight: 600;
+}
+
+.connectionIndicator[data-state='failed'] {
+  color: #e03131;
+  font-weight: 600;
+}
+
+.placeholder {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #7a7a9a;
+}
+
+.voiceControls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.voiceButton {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4a4a6a;
+  background: #f1f3f5;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.micStatus {
+  font-size: 0.875rem;
+  color: #7a7a9a;
+}
+
+.statusBar {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 16px rgba(26, 26, 46, 0.06);
+}
+
+.statusText {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #3b5bdb;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(26, 26, 46, 0.55);
+  z-index: 10;
+}
+
+.overlayCard {
+  width: 100%;
+  max-width: 28rem;
+  padding: 2rem;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 12px 40px rgba(26, 26, 46, 0.2);
+}
+
+.overlayTitle {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.overlayStatus {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: #7a7a9a;
+}
+
+.overlayStatus[data-state='connected'] {
+  color: #2f9e44;
+  font-weight: 600;
+}
+
+.overlayStatus[data-state='failed'] {
+  color: #e03131;
+  font-weight: 600;
+}
+
+.overlayError {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: #e03131;
+}
+
+.hostShare {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.shareUrl {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #4a4a6a;
+  word-break: break-all;
+}
+
+.shareActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.copyFeedback {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2f9e44;
+}
+
+@media (min-width: 768px) {
+  .layout {
+    padding: 1.5rem 2rem 2rem;
+  }
+
+  .sessionBody {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .boardPanel {
+    flex: 2;
+  }
+
+  .sidePanel {
+    flex: 1;
+    min-width: 16rem;
+    max-width: 22rem;
+  }
+}

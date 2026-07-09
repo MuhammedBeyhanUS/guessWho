@@ -42,6 +42,7 @@ Default development flow is Plan -> Work -> Review.
 - Write tests for every new feature.
 - Never commit code that does not compile.
 - Keep the main readme.md file up to date.
+- put the issues TO DO list to the readme.md file and mark them as they finishes.
 
 ## Before finishing
 Always:

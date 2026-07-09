@@ -53,7 +53,7 @@ describe('PlayPage host create view', () => {
     useP2PConnectionMock.mockReset()
   })
 
-  it('renders room code, shareable URL, Copy Link, and Share buttons', () => {
+  it('renders room code, shareable URL, Copy Link, and Share buttons while connecting', () => {
     useP2PConnectionMock.mockReturnValue({
       connectionState: 'connecting',
       errorMessage: null,
@@ -64,7 +64,7 @@ describe('PlayPage host create view', () => {
 
     renderHostPlayPage('XYZ789')
 
-    expect(screen.getByText('XYZ789')).toBeInTheDocument()
+    expect(screen.getByText(/room: xyz789/i)).toBeInTheDocument()
     expect(
       screen.getByText('http://localhost:3000/play/XYZ789'),
     ).toBeInTheDocument()
@@ -102,7 +102,7 @@ describe('PlayPage host create view', () => {
     expect(screen.getByText('Link copied!')).toBeInTheDocument()
   })
 
-  it('shows connected status when peer joins', () => {
+  it('shows game session layout when peer joins', () => {
     useP2PConnectionMock.mockReturnValue({
       connectionState: 'connected',
       errorMessage: null,
@@ -113,10 +113,11 @@ describe('PlayPage host create view', () => {
 
     renderHostPlayPage()
 
-    expect(screen.getByText(/opponent connected/i)).toBeInTheDocument()
-    expect(
-      screen.getByText(/connection status: connected/i),
-    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Character board')).toBeInTheDocument()
+    expect(screen.getByLabelText('Text chat')).toBeInTheDocument()
+    expect(screen.getByLabelText('Voice controls')).toBeInTheDocument()
+    expect(screen.getByText(/you are the host/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Connection status')).not.toBeInTheDocument()
   })
 
   it('shows retry when connection fails', () => {
@@ -144,7 +145,7 @@ describe('PlayPage guest join view', () => {
     useP2PConnectionMock.mockReset()
   })
 
-  it('shows Connecting state when opened directly without isHost', () => {
+  it('shows connecting overlay when opened directly without isHost', () => {
     useP2PConnectionMock.mockReturnValue({
       connectionState: 'connecting',
       errorMessage: null,
@@ -155,12 +156,11 @@ describe('PlayPage guest join view', () => {
 
     renderGuestPlayPage('XYZ789')
 
-    expect(screen.getByText('XYZ789')).toBeInTheDocument()
+    expect(screen.getByText(/room: xyz789/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Connection status')).toBeInTheDocument()
     expect(
       screen.getAllByText(/connecting to opponent/i).length,
     ).toBeGreaterThan(0)
-    expect(
-      screen.queryByText(/preview the character board/i),
-    ).not.toBeInTheDocument()
+    expect(screen.getByText(/you are the guest/i)).toBeInTheDocument()
   })
 })

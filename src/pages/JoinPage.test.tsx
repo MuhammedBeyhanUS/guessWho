@@ -60,7 +60,7 @@ describe('JoinPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /join/i }))
 
     expect(screen.getAllByText(/connecting/i).length).toBeGreaterThan(0)
-    expect(screen.getByText('ABC234')).toBeInTheDocument()
+    expect(screen.getByLabelText('Room code ABC234')).toBeInTheDocument()
     expect(
       screen.queryByText(/preview the character board/i),
     ).not.toBeInTheDocument()
