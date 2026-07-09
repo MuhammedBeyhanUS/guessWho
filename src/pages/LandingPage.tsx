@@ -1,9 +1,15 @@
 import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
+import { generateRoomCode } from '../domain/roomCode'
 import styles from './LandingPage.module.css'
 
 function LandingPage() {
   const navigate = useNavigate()
+
+  function handleCreateGame() {
+    const roomCode = generateRoomCode()
+    navigate(`/play/${roomCode}`, { state: { isHost: true } })
+  }
 
   return (
     <main className={styles.page}>
@@ -15,7 +21,7 @@ function LandingPage() {
           person first.
         </p>
         <div className={styles.actions}>
-          <Button variant="primary" onClick={() => navigate('/play/new')}>
+          <Button variant="primary" onClick={handleCreateGame}>
             Create Game
           </Button>
           <Button variant="secondary" onClick={() => navigate('/join')}>
