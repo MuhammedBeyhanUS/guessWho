@@ -1,0 +1,9 @@
+---
+description: Core agent behavior — understand scope before coding, keep summaries actionable.
+alwaysApply: true
+---
+## General Behavior
+- Do not start coding before understanding the task boundary.
+- Prefer asking a small number of high-value clarification questions.
+- Treat repository files as the source of truth.
+- Keep summaries short and action-oriented.

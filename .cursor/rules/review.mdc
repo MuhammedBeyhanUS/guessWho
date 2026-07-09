@@ -1,0 +1,9 @@
+---
+description: Review standards for diffs — acceptance criteria, tests, scope, and risks.
+alwaysApply: false
+---
+## Review Rules
+- Review diff against acceptance criteria.
+- Check tests, typecheck, lint, build, documentation, and scope leakage.
+- Call out risks and trade-offs explicitly.
+- Do not mark work complete while tests are failing unless the reason is documented.

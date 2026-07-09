@@ -1,0 +1,9 @@
+---
+description: Implementation discipline for scoped issues — TDD, minimal diffs, one issue at a time.
+alwaysApply: false
+---
+## Implementation Rules
+- Work on one issue at a time.
+- Use TDD for deterministic business logic when practical.
+- Run the smallest relevant test first, then broader checks.
+- Do not mix feature work with unrelated cleanup.

@@ -1,0 +1,9 @@
+---
+description: Convert broad requests into small vertical-slice issues with acceptance criteria.
+alwaysApply: false
+---
+## Planning Rules
+- Convert broad requests into small, testable issues.
+- Each issue should include acceptance criteria, test expectations, and out-of-scope notes.
+- Prefer vertical slices over horizontal layer tasks.
+- Write planned issues to `docs/issues/`.

@@ -1,0 +1,7 @@
+---
+description: Testing standards — every feature must include tests.
+alwaysApply: true
+---
+# Testing Rules
+
+Every feature must include tests.
