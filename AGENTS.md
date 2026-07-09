@@ -3,7 +3,7 @@
 ## Project Context
 - Project type: game
 - Primary language/framework: React + TypeScript
-- Main entry points: localhost:3000
+- Main entry points: localhost:5173
 - Important commands:
   - `npm run dev` — start development server
   - `npm run build` — production build
