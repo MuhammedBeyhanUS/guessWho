@@ -18,3 +18,4 @@ argument-hint: "<optional scope or push flag>"
 - Do not commit secrets or unrelated files.
 - Do not invent test results.
 - Prefer small commits that map to a coherent change.
+- add the AI LLM model and how many token is used for the current commit to the commit header.  

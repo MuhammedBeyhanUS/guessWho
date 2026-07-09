@@ -1,8 +1,32 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import JoinPage from './JoinPage'
 import PlayPage from './PlayPage'
+
+vi.mock('../transport/useP2PConnection', () => ({
+  useP2PConnection: () => ({
+    connectionState: 'connecting',
+    errorMessage: null,
+    retry: vi.fn(),
+    send: vi.fn(),
+    onMessage: vi.fn(() => () => {}),
+  }),
+  getConnectionStatusLabel: (state: string) => {
+    switch (state) {
+      case 'connecting':
+        return 'Connecting to opponent…'
+      case 'connected':
+        return 'Connected'
+      case 'failed':
+        return 'Connection failed'
+      case 'disconnected':
+        return 'Disconnected'
+      default:
+        return state
+    }
+  },
+}))
 
 function renderJoinPage(initialEntry = '/join') {
   return render(
@@ -16,6 +40,10 @@ function renderJoinPage(initialEntry = '/join') {
 }
 
 describe('JoinPage', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('renders room code input and Join button', () => {
     renderJoinPage()
 
@@ -31,7 +59,7 @@ describe('JoinPage', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /join/i }))
 
-    expect(screen.getByText(/connecting/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/connecting/i).length).toBeGreaterThan(0)
     expect(screen.getByText('ABC234')).toBeInTheDocument()
     expect(
       screen.queryByText(/preview the character board/i),

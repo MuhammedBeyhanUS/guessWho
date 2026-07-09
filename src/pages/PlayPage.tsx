@@ -3,6 +3,10 @@ import { useLocation, useParams } from 'react-router-dom'
 import CharacterBoard from '../components/CharacterBoard'
 import Button from '../components/Button'
 import { getShareableUrl } from '../domain/roomCode'
+import {
+  getConnectionStatusLabel,
+  useP2PConnection,
+} from '../transport/useP2PConnection'
 import styles from './PlayPage.module.css'
 
 type PlayLocationState = {
@@ -17,8 +21,14 @@ function PlayPage() {
   // Guest: opened /play/:roomCode directly or via join flow (issue 005).
   const isHost = locationState?.isHost === true
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
+  const { connectionState, errorMessage, retry } = useP2PConnection({
+    roomCode,
+    isHost,
+  })
 
   const shareUrl = roomCode ? getShareableUrl(roomCode) : ''
+  const connectionLabel = getConnectionStatusLabel(connectionState)
+  const showRetry = connectionState === 'failed'
 
   async function copyShareLink() {
     if (!shareUrl) {
@@ -70,20 +80,52 @@ function PlayPage() {
                 {copyFeedback}
               </p>
             ) : null}
-            <p className={styles.waiting}>Waiting for opponent…</p>
-            <p className={styles.connectionStatus}>
-              Connection status: waiting for peer
+            <p className={styles.waiting}>
+              {connectionState === 'connected'
+                ? 'Opponent connected!'
+                : 'Waiting for opponent…'}
             </p>
+            <p
+              className={styles.connectionStatus}
+              data-state={connectionState}
+              role="status"
+            >
+              Connection status: {connectionLabel}
+            </p>
+            {errorMessage ? (
+              <p className={styles.connectionError} role="alert">
+                {errorMessage}
+              </p>
+            ) : null}
+            {showRetry ? (
+              <Button variant="primary" onClick={retry}>
+                Retry connection
+              </Button>
+            ) : null}
           </div>
         ) : (
           <div className={styles.guestView}>
             <p className={styles.message}>
               Room code: <strong>{roomCode}</strong>
             </p>
-            <p className={styles.connecting}>Connecting…</p>
-            <p className={styles.connectionStatus}>
-              Connection status: joining room
+            <p className={styles.connecting}>{connectionLabel}</p>
+            <p
+              className={styles.connectionStatus}
+              data-state={connectionState}
+              role="status"
+            >
+              Connection status: {connectionLabel}
             </p>
+            {errorMessage ? (
+              <p className={styles.connectionError} role="alert">
+                {errorMessage}
+              </p>
+            ) : null}
+            {showRetry ? (
+              <Button variant="primary" onClick={retry}>
+                Retry connection
+              </Button>
+            ) : null}
           </div>
         )}
       </section>

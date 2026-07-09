@@ -101,6 +101,22 @@
   color: #7a7a9a;
 }
 
+.connectionStatus[data-state='connected'] {
+  color: #2f9e44;
+  font-weight: 600;
+}
+
+.connectionStatus[data-state='failed'] {
+  color: #e03131;
+  font-weight: 600;
+}
+
+.connectionError {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #e03131;
+}
+
 .guestView {
   display: flex;
   flex-direction: column;

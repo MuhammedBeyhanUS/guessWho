@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "lint": "oxlint",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{ts,json,html}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{ts,json,html}\"",
+    "signaling": "node signaling/server.js"
   },
   "dependencies": {
     "react": "^19.2.7",
@@ -24,6 +25,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "jsdom": "^26.1.0",
     "oxlint": "^1.71.0",
+    "peer": "^1.0.2",
     "prettier": "^3.5.3",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
