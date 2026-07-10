@@ -4,6 +4,7 @@ import {
   ROOM_CODE_LENGTH,
   ROOM_CODE_PATTERN,
   generateRoomCode,
+  toPeerId,
   validateRoomCode,
 } from './roomCode'
 
@@ -85,5 +86,15 @@ describe('generateRoomCode', () => {
     expect(getRandomValues).toHaveBeenCalledOnce()
     expect(getRandomValues.mock.calls[0]?.[0]).toBeInstanceOf(Uint8Array)
     expect(getRandomValues.mock.calls[0]?.[0]).toHaveLength(ROOM_CODE_LENGTH)
+  })
+})
+
+describe('toPeerId', () => {
+  it('prefixes validated room codes for the shared broker', () => {
+    expect(toPeerId('abc234')).toBe('guesswho-ABC234')
+  })
+
+  it('throws for invalid room codes', () => {
+    expect(() => toPeerId('BAD')).toThrow(/6 characters/i)
   })
 })

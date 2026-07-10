@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
-import { createP2PConnection } from './webrtcConnection'
+import { createP2PConnection } from './peerJsConnection'
 import type {
   ConnectionState,
   MessageHandler,

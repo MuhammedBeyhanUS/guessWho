@@ -45,3 +45,13 @@ export function generateRoomCode(): string {
 export function getShareableUrl(roomCode: string): string {
   return `${window.location.origin}/play/${roomCode}`
 }
+
+/** Maps a room code to the PeerJS peer id used on the signaling broker. */
+export function toPeerId(roomCode: string): string {
+  const result = validateRoomCode(roomCode)
+  if (!result.ok) {
+    throw new Error(result.message)
+  }
+
+  return `guesswho-${result.code}`
+}

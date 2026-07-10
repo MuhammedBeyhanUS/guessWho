@@ -17,6 +17,11 @@ export {
   type SignalingMessage,
 } from './signalingClient'
 export { createRtcConfiguration, getIceServers } from './iceConfig'
-export { createP2PConnection, WebRtcP2PConnection } from './webrtcConnection'
+export { getPeerJsBrokerConfig, type PeerJsBrokerConfig } from './peerJsConfig'
+export { createP2PConnection, PeerJsP2PConnection } from './peerJsConnection'
+export {
+  createP2PConnection as createWebRtcP2PConnection,
+  WebRtcP2PConnection,
+} from './webrtcConnection'
 export { isTrackMuted, setTrackMuted } from './voice'
 export { getConnectionStatusLabel, useP2PConnection } from './useP2PConnection'

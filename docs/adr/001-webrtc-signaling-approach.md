@@ -1,7 +1,7 @@
 # WebRTC Signaling Approach
 
 ## Status
-Accepted
+Accepted (updated 2026-03-20)
 
 ## Context
 
@@ -10,50 +10,62 @@ Guess Who requires automatic connection when a guest opens a shareable room link
 Requirements:
 
 - No traditional application backend (no REST API, DB, game server).
-- Acceptable to run a **minimal** signaling relay.
+- Minimal setup for local development (single `npm run dev` preferred).
 - Must support link-based joining with a 6-character room code.
 
 ## Decision
 
-Use **native `RTCPeerConnection`** wrapped in a project-owned transport module, with a **self-hosted PeerJS PeerServer** bundled in the repo.
-
-### Signaling: self-hosted from day one
+Use the **PeerJS client SDK** with the **PeerJS cloud broker** (`0.peerjs.com`) as the default signaling path.
 
 | Aspect | Choice |
 |---|---|
-| Server | `peer` npm package (PeerServer) in `signaling/` |
-| Dev | `npm run signaling` alongside `npm run dev` |
-| Prod | Same PeerServer deployed to Render/Fly free tier |
-| Config | `VITE_SIGNALING_URL` env var (e.g. `localhost:9000` dev, `wss://signaling.example.com` prod) |
+| Client | `peerjs` npm package |
+| Default signaling | PeerJS cloud broker (no local process) |
+| Dev | `npm run dev` only |
+| Optional override | `VITE_SIGNALING_URL=localhost:9000` + `npm run signaling` for self-hosted PeerServer |
+| Peer ID | `guesswho-{ROOM_CODE}` on the broker |
+| Game/voice data | PeerJS `DataConnection` + `MediaConnection` (still P2P after handshake) |
 
-**Why not PeerJS cloud broker:** third-party availability/rate limits, two configs (dev vs prod), and no control over uptime. Self-hosted PeerServer is ~30 lines, free-tier deployable, and one consistent config.
+### Why PeerJS cloud (default)
 
-Signaling server responsibilities are **only**:
+- **Zero local infra for dev** — matches the `dev/game` prototype workflow; two browser tabs connect without a second terminal.
+- **Same config for quick deploys** — static frontend only; no signaling VM required for hobby/small-scale use.
+- **PeerJS still establishes true P2P** — broker only relays SDP/ICE; game state and media do not pass through the broker.
 
-1. Register host peer by room code.
-2. Forward SDP/ICE between exactly two peers in a room.
+### Optional self-hosted signaling
+
+`signaling/` (PeerServer) remains in the repo for teams that want a private broker:
+
+```bash
+VITE_SIGNALING_URL=localhost:9000 npm run signaling   # terminal 1
+VITE_SIGNALING_URL=localhost:9000 npm run dev           # terminal 2
+```
+
+Set `VITE_SIGNALING_URL=cloud` (or leave unset) to use the public broker.
 
 The signaling server **never** touches game state, chat content, or media streams.
 
 ### ICE / NAT
 
-- **STUN:** Public servers (e.g. `stun:stun.l.google.com:19302`).
-- **TURN:** Included from v1 via env-configured credentials (`VITE_TURN_URL`, `VITE_TURN_USERNAME`, `VITE_TURN_PASSWORD`). Use a free-tier TURN provider (e.g. Metered, Twilio trial) or self-hosted coturn if needed.
+- PeerJS cloud path uses PeerJS-managed STUN/TURN defaults.
+- Self-hosted path may still use `VITE_TURN_*` env vars via custom RTC config if we re-enable the legacy native transport.
 
-**Rejected alternatives:**
+### Rejected / superseded
 
-| Alternative | Why rejected |
+| Alternative | Outcome |
 |---|---|
-| PeerJS cloud broker only | Unreliable for production; splits dev/prod config |
-| Manual SDP copy-paste | Unacceptable UX for shareable-link product |
-| Full custom WebSocket game server | Violates no-game-server goal; unnecessary |
-| PeerJS client SDK only | Couples game code to PeerJS API; harder to swap signaling |
-| Firebase / Supabase realtime | Adds vendor backend dependency for data that fits P2P |
+| Self-hosted only (previous ADR) | Superseded as default — higher dev friction |
+| Manual SDP copy-paste | Unacceptable UX |
+| Full custom WebSocket game server | Violates no-game-server goal |
+| Firebase / Supabase realtime | Vendor backend for data that fits P2P |
+
+The previous **native `RTCPeerConnection` + self-hosted PeerServer** implementation remains in `webrtcConnection.ts` as an optional legacy transport (`createWebRtcP2PConnection`).
 
 ## Consequences
 
-- Repo includes `signaling/` with PeerServer and `npm run signaling` script.
-- Transport layer must be interface-driven so signaling URL and TURN can change without touching game rules.
-- HTTPS required on both static host and signaling host for production WebRTC.
-- Room codes are "first claim" on the signaling server; no persistence if host never connects.
-- Follow-up: ADR 002 defines the data-channel protocol on top of the established peer connection.
+- `peerjs` is a runtime dependency; transport stays behind `P2PConnection`.
+- Room codes are "first claim" on the broker; duplicate host IDs return "room already in use".
+- PeerJS cloud availability and rate limits are an external dependency for the default path.
+- Production on custom domains still requires HTTPS for WebRTC.
+- Follow-up: ADR 002 defines the data-channel message protocol (unchanged).
+- Product requirements aligned in `docs/PRD.md` (signaling, deployment, resolved decisions).

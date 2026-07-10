@@ -217,12 +217,7 @@ export function useGameSession({
     setGameState(flipResult.value)
     setCoinFlipVisible(true)
     sendRef.current({ type: 'coin-flip', result })
-  }, [
-    isHost,
-    connectionState,
-    gameState,
-    randomCoinFlip,
-  ])
+  }, [isHost, connectionState, gameState, randomCoinFlip])
 
   useEffect(() => {
     if (!isHost || connectionState !== 'connected') {

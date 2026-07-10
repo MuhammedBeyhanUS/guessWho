@@ -8,7 +8,7 @@ A standalone browser-based **2-player Guess Who** game with real-time **voice ch
 
 - Deliver the classic Guess Who experience for two remote players in a browser.
 - Connect voice and text automatically when the second player joins.
-- Keep hosting costs near zero: static frontend + optional tiny signaling relay.
+- Keep hosting costs near zero: static frontend; default **PeerJS cloud broker** (no self-hosted signaling required).
 - Separate game rules (pure logic) from UI and networking (framework glue).
 
 ## Non-goals (v1)
@@ -137,8 +137,8 @@ flowchart TB
     UI --> Transport
   end
 
-  subgraph signaling [Minimal Signaling - required]
-    Sig[PeerServer or managed signaling WS]
+  subgraph signaling [Signaling - SDP/ICE bootstrap only]
+    Sig[PeerJS cloud broker - default]
   end
 
   subgraph stun [Public STUN - free]
@@ -166,13 +166,13 @@ flowchart TB
 | Routing | **react-router-dom** | `/`, `/play/:roomCode`, `/join` |
 | Testing | **Vitest** + **React Testing Library** | Matches Vite; unit test rules engine thoroughly |
 | Styling | **CSS Modules** | No extra dependency; component-scoped styles |
-| WebRTC | **Native `RTCPeerConnection`** in a thin transport module | Full control; avoids locking to one broker SDK |
-| Signaling | **Self-hosted PeerJS PeerServer** in `signaling/` | One config for dev + prod; `npm run signaling` |
+| WebRTC / P2P | **PeerJS client SDK** (`peerjs`) behind `P2PConnection` | Data + voice over P2P after handshake; see ADR 001 |
+| Signaling | **PeerJS cloud broker** (`0.peerjs.com`) by default | `npm run dev` only; optional self-hosted PeerServer via `VITE_SIGNALING_URL` |
 | ICE | Public STUN servers | Free; sufficient for many home networks |
 | TURN | Metered / Twilio free tier / self-hosted coturn | **Included from v1** via env credentials |
 | Character art | Original SVG portraits (ADR 003) | Hasbro-inspired style; 24 custom illustrations |
 
-**Alternative considered:** `simple-peer` — good abstraction but still needs custom signaling; native API keeps dependencies minimal with one small adapter.
+**Alternatives considered:** Native `RTCPeerConnection` + self-hosted PeerServer (legacy in `webrtcConnection.ts`); `simple-peer` — both need more custom signaling glue than PeerJS cloud for link-based join UX.
 
 ### Layering
 
@@ -206,13 +206,13 @@ JSON messages over a single ordered `RTCDataChannel`:
 
 Board flip state is **never** transmitted.
 
-Voice uses a separate `MediaStream` attached to the same `RTCPeerConnection`.
+Voice uses PeerJS `MediaConnection` (separate from the game `DataConnection`); media is still P2P after signaling.
 
 ### Room identity
 
 - Room code = 6 alphanumeric characters, generated client-side with `crypto.getRandomValues`.
-- Host peer registers with signaling using room code as peer/room id.
-- Guest connects to that id.
+- Host peer registers on the broker with id `guesswho-{ROOM_CODE}` (prefix avoids collisions on shared cloud broker).
+- Guest connects to that peer id.
 - URL is the join mechanism: `https://<origin>/play/<roomCode>`.
 
 ## Backend Necessity Assessment
@@ -233,12 +233,12 @@ Voice uses a separate `MediaStream` attached to the same `RTCPeerConnection`.
 
 **Conclusion:** A **traditional backend is not required**. A **minimal signaling server** (or managed signaling SaaS) **is required** for production-quality auto-connect when players open a link. Manual copy-paste SDP exchange is zero-server but unacceptable UX for this product.
 
-### Minimal signaling approach (decided)
+### Minimal signaling approach (decided — ADR 001)
 
-- **Self-hosted PeerServer** bundled in repo (`signaling/`, `npm run signaling`).
-- Dev: run alongside Vite; prod: deploy same server to Render/Fly free tier.
-- `VITE_SIGNALING_URL` configures the client endpoint.
-- **TURN from v1:** env-configured credentials for strict NAT (~10–20% of networks).
+- **Default:** PeerJS cloud broker — no local signaling process; dev is `npm run dev` only.
+- **Optional:** Self-hosted PeerServer in `signaling/` when `VITE_SIGNALING_URL=localhost:9000` (or custom host).
+- `VITE_SIGNALING_URL` unset or `cloud` → public broker; legacy native transport may still use `VITE_TURN_*` for TURN.
+- Broker relays SDP/ICE only; game state, chat, and voice do not pass through the broker.
 
 No database, authentication service, or game state server is needed. The host browser is the **session authority** for room creation; first peer to claim a room code wins (acceptable for casual 2-player links).
 
@@ -251,7 +251,7 @@ No database, authentication service, or game state server is needed. The host br
 ## Deployment
 
 - **Frontend:** Static deploy (Vercel, Netlify, GitHub Pages, Cloudflare Pages).
-- **Signaling:** Single small Node process (PeerServer) on free tier, or managed signaling endpoint.
+- **Signaling:** PeerJS cloud by default (zero deploy); optional self-hosted PeerServer for private broker.
 - **HTTPS required** for `getUserMedia` and WebRTC in production.
 
 ## Testing Strategy
@@ -275,7 +275,7 @@ No database, authentication service, or game state server is needed. The host br
 | # | Question | Decision |
 |---|---|---|
 | 1 | Who goes first? | **Coin flip** — host runs animated flip after both ready; result synced via P2P |
-| 2 | Signaling approach? | **Self-hosted PeerServer** from day one (`signaling/`, single dev/prod config) |
+| 2 | Signaling approach? | **PeerJS cloud broker** default (ADR 001); optional self-hosted PeerServer in `signaling/` |
 | 3 | Character visuals? | **Original Hasbro-style custom illustrations** — 24 SVG portraits; see ADR 003 |
 | 4 | Auto-flip after answers? | **No** — manual flip only, like the physical game |
 | 5 | Room code charset? | **Simple:** `A–Z` + `2–9` only; no `0`/`O`/`1`/`I` |
@@ -290,7 +290,7 @@ Vertical-slice issues in `docs/issues/` (ordered):
 3. `003` — Game rules engine
 4. `004` — Create game room flow
 5. `005` — Join game room flow
-6. `006` — WebRTC P2P connection layer
+6. `006` — P2P connection layer (PeerJS cloud default)
 7. `007` — Game session layout shell
 8. `008` — Text chat over P2P
 9. `009` — Voice chat over P2P
