@@ -173,29 +173,34 @@ describe('useGameplay', () => {
     )
   })
 
-  it('navigates home on play again', () => {
+  it('resets gameplay UI state', () => {
     const send = vi.fn()
-    const finished = {
-      ...setupPlayingGame(),
-      phase: 'finished' as const,
-      winner: 'host' as const,
-      gameOverReason: 'correct-guess' as const,
-      currentPlayer: null,
-    }
+    const initial = setupPlayingGame()
 
-    const { result } = renderHook(() =>
-      useGameplay({
-        gameState: finished,
+    const { result } = renderHook(() => {
+      const [gameState, setGameState] = useState(initial)
+      const gameplay = useGameplay({
+        gameState,
         localRole: 'host',
-        setGameState: vi.fn(),
+        setGameState,
         send,
-      }),
-    )
-
-    act(() => {
-      result.current.playAgain()
+      })
+      return { gameState, gameplay }
     })
 
-    expect(window.location.href).toBe('/')
+    act(() => {
+      result.current.gameplay.enterGuessMode()
+      result.current.gameplay.selectGuessCharacter('marco')
+    })
+
+    expect(result.current.gameplay.gameplayMode).toBe('guess')
+    expect(result.current.gameplay.selectedGuessId).toBe('marco')
+
+    act(() => {
+      result.current.gameplay.resetGameplayUi()
+    })
+
+    expect(result.current.gameplay.gameplayMode).toBe('idle')
+    expect(result.current.gameplay.selectedGuessId).toBeNull()
   })
 })

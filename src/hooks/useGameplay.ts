@@ -42,7 +42,7 @@ export type GameplayView = {
   enterGuessMode: () => void
   exitGuessMode: () => void
   selectGuessCharacter: (characterId: string) => void
-  playAgain: () => void
+  resetGameplayUi: () => void
 }
 
 type UseGameplayOptions = {
@@ -235,8 +235,9 @@ export function useGameplay({
     setSelectedGuessId(characterId)
   }, [])
 
-  const playAgain = useCallback(() => {
-    window.location.href = '/'
+  const resetGameplayUi = useCallback(() => {
+    setGameplayMode('idle')
+    setSelectedGuessId(null)
   }, [])
 
   const gameOverVisible =
@@ -265,6 +266,6 @@ export function useGameplay({
     enterGuessMode,
     exitGuessMode,
     selectGuessCharacter,
-    playAgain,
+    resetGameplayUi,
   }
 }

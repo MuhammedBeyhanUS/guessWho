@@ -91,5 +91,9 @@ export function useQuestionHistory({
     })
   }, [])
 
-  return { entries, recordQuestion, recordAnswer }
+  const clearHistory = useCallback(() => {
+    setEntries([])
+  }, [])
+
+  return { entries, recordQuestion, recordAnswer, clearHistory }
 }

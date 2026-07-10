@@ -5,6 +5,7 @@ import {
   beginPlaying,
   createGame,
   markPlayerReady,
+  resetQuestionIdCounter,
   selectMystery,
   type GameState,
   type PlayerRole,
@@ -27,6 +28,7 @@ type UseGameSessionOptions = {
   onMessage: (handler: (message: P2PMessage) => void) => () => void
   recordQuestion?: (text: string, questionId: string) => void
   recordAnswer?: (value: YesNo, questionId: string) => void
+  onRematch?: () => void
   coinFlipDelayMs?: number
   randomCoinFlip?: () => PlayerRole
 }
@@ -46,7 +48,8 @@ export type GameSessionView = {
   sessionError: string | null
   selectMysteryCharacter: (characterId: string) => void
   sendReady: () => void
-} & GameplayView
+  playAgain: () => void
+} & Omit<GameplayView, 'resetGameplayUi'>
 
 function opponentRole(role: PlayerRole): PlayerRole {
   return role === 'host' ? 'guest' : 'host'
@@ -109,6 +112,7 @@ export function useGameSession({
   onMessage,
   recordQuestion,
   recordAnswer,
+  onRematch,
   coinFlipDelayMs = COIN_FLIP_ANIMATION_MS,
   randomCoinFlip = defaultRandomCoinFlip,
 }: UseGameSessionOptions): GameSessionView {
@@ -118,14 +122,29 @@ export function useGameSession({
   const [sessionError, setSessionError] = useState<string | null>(null)
   const [boardKey, setBoardKey] = useState('setup-0')
   const coinFlipSentRef = useRef(false)
+  const rematchCountRef = useRef(0)
   const wasConnectedRef = useRef(false)
   const onMessageRef = useRef(onMessage)
   const sendRef = useRef(send)
+  const onRematchRef = useRef(onRematch)
 
   useEffect(() => {
     onMessageRef.current = onMessage
     sendRef.current = send
-  }, [onMessage, send])
+    onRematchRef.current = onRematch
+  }, [onMessage, send, onRematch])
+
+  const resetSessionForRematch = useCallback((resetGameplayUi: () => void) => {
+    setGameState(createGame())
+    setCoinFlipVisible(false)
+    setSessionError(null)
+    coinFlipSentRef.current = false
+    rematchCountRef.current += 1
+    setBoardKey(`setup-rematch-${rematchCountRef.current}`)
+    resetQuestionIdCounter()
+    resetGameplayUi()
+    onRematchRef.current?.()
+  }, [])
 
   useEffect(() => {
     if (connectionState === 'connected') {
@@ -153,6 +172,11 @@ export function useGameSession({
     }
 
     const unsubscribe = onMessageRef.current((message) => {
+      if (message.type === 'rematch') {
+        resetSessionForRematch(resetGameplayUiRef.current)
+        return
+      }
+
       if (message.type === 'ready') {
         setGameState((current) => {
           const result = applyRemoteReady(current, opponentRole(localRole))
@@ -186,7 +210,7 @@ export function useGameSession({
     })
 
     return unsubscribe
-  }, [connectionState, localRole])
+  }, [connectionState, localRole, resetSessionForRematch])
 
   useEffect(() => {
     if (!isHost || connectionState !== 'connected') {
@@ -273,8 +297,6 @@ export function useGameSession({
     })
   }, [localRole])
 
-  const opponent = opponentRole(localRole)
-
   const gameplay = useGameplay({
     gameState,
     localRole,
@@ -283,6 +305,21 @@ export function useGameSession({
     recordQuestion,
     recordAnswer,
   })
+
+  const resetGameplayUiRef = useRef(gameplay.resetGameplayUi)
+  resetGameplayUiRef.current = gameplay.resetGameplayUi
+
+  const playAgain = useCallback(() => {
+    if (connectionState !== 'connected' || gameState.phase !== 'finished') {
+      return
+    }
+
+    resetSessionForRematch(resetGameplayUiRef.current)
+    sendRef.current({ type: 'rematch' })
+  }, [connectionState, gameState.phase, resetSessionForRematch])
+
+  const opponent = opponentRole(localRole)
+  const { resetGameplayUi: _resetGameplayUi, ...gameplayView } = gameplay
 
   return {
     gameState,
@@ -303,6 +340,7 @@ export function useGameSession({
     sessionError,
     selectMysteryCharacter,
     sendReady,
-    ...gameplay,
+    ...gameplayView,
+    playAgain,
   }
 }

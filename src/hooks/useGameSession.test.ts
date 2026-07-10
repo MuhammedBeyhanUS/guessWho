@@ -358,6 +358,79 @@ describe('useGameSession', () => {
     expect(guestResult.current.gameState.currentPlayer).toBe('guest')
     expect(hostResult.current.gameState.pendingQuestion).toBeNull()
   })
+
+  it('restarts setup in the same room when play again is clicked', async () => {
+    const transport = createMockTransport()
+    const randomCoinFlip = vi.fn(() => 'host' as const)
+    const onRematch = vi.fn()
+
+    const { result: hostResult } = renderHook(() =>
+      useGameSession({
+        isHost: true,
+        connectionState: 'connected',
+        send: transport.hostSend,
+        onMessage: transport.hostOnMessage,
+        coinFlipDelayMs: 50,
+        randomCoinFlip,
+        onRematch,
+      }),
+    )
+
+    const { result: guestResult } = renderHook(() =>
+      useGameSession({
+        isHost: false,
+        connectionState: 'connected',
+        send: transport.guestSend,
+        onMessage: transport.guestOnMessage,
+        coinFlipDelayMs: 50,
+        randomCoinFlip,
+      }),
+    )
+
+    act(() => {
+      hostResult.current.selectMysteryCharacter('eleni')
+      hostResult.current.sendReady()
+      guestResult.current.selectMysteryCharacter('marco')
+      guestResult.current.sendReady()
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(50)
+    })
+
+    act(() => {
+      transport.hostSend({ type: 'guess', characterId: 'marco' })
+    })
+
+    expect(guestResult.current.phase).toBe('finished')
+    expect(hostResult.current.phase).toBe('finished')
+    expect(hostResult.current.gameOverVisible).toBe(true)
+
+    act(() => {
+      hostResult.current.playAgain()
+    })
+
+    expect(transport.hostSend).toHaveBeenCalledWith({ type: 'rematch' })
+    expect(hostResult.current.phase).toBe('setup')
+    expect(guestResult.current.phase).toBe('setup')
+    expect(hostResult.current.gameOverVisible).toBe(false)
+    expect(hostResult.current.canSendReady).toBe(false)
+    expect(onRematch).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      hostResult.current.selectMysteryCharacter('theo')
+      hostResult.current.sendReady()
+      guestResult.current.selectMysteryCharacter('eleni')
+      guestResult.current.sendReady()
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(50)
+    })
+
+    expect(hostResult.current.phase).toBe('playing')
+    expect(guestResult.current.phase).toBe('playing')
+  })
 })
 
 describe('setup sync reducers', () => {

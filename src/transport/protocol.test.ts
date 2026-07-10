@@ -19,6 +19,7 @@ const messages: P2PMessage[] = [
     winner: 'guest',
     reason: 'correct-guess',
   },
+  { type: 'rematch' },
 ]
 
 describe('P2P protocol serialization', () => {

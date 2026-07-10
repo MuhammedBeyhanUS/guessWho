@@ -12,6 +12,7 @@ export type P2PMessage =
       winner: 'host' | 'guest'
       reason: 'correct-guess' | 'wrong-guess'
     }
+  | { type: 'rematch' }
 
 export function serializeP2PMessage(message: P2PMessage): string {
   return JSON.stringify(message)
@@ -73,6 +74,8 @@ export function deserializeP2PMessage(raw: string): P2PMessage | null {
             reason: parsed.reason,
           }
         : null
+    case 'rematch':
+      return { type: 'rematch' }
     default:
       return null
   }

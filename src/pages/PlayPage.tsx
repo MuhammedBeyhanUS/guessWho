@@ -44,6 +44,7 @@ function PlayPage() {
     entries: questionHistory,
     recordQuestion,
     recordAnswer,
+    clearHistory,
   } = useQuestionHistory({
     onMessage,
     connectionState,
@@ -83,6 +84,7 @@ function PlayPage() {
     onMessage,
     recordQuestion,
     recordAnswer,
+    onRematch: clearHistory,
   })
 
   const shareUrl = roomCode ? getShareableUrl(roomCode) : ''

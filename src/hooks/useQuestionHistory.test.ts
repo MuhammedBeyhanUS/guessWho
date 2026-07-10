@@ -112,6 +112,25 @@ describe('useQuestionHistory', () => {
     expect(result.current.entries).toHaveLength(2)
   })
 
+  it('clears history on demand', () => {
+    const { result } = renderHook(() =>
+      useQuestionHistory({
+        onMessage: vi.fn(() => () => {}),
+        connectionState: 'connected',
+      }),
+    )
+
+    act(() => {
+      result.current.recordQuestion('Hello?', 'q-3')
+    })
+    expect(result.current.entries).toHaveLength(1)
+
+    act(() => {
+      result.current.clearHistory()
+    })
+    expect(result.current.entries).toEqual([])
+  })
+
   it('clears history when disconnected', () => {
     const { result, rerender } = renderHook(
       ({ connectionState }: { connectionState: ConnectionState }) =>
