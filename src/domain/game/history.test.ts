@@ -3,6 +3,8 @@ import {
   appendHistoryEntry,
   createAnswerEntry,
   createQuestionEntry,
+  hasAnswerForQuestion,
+  hasQuestionForId,
 } from './history'
 
 describe('game history', () => {
@@ -32,5 +34,17 @@ describe('game history', () => {
     const duplicate = createQuestionEntry('self', 'Is your person bald?', 'q-2')
 
     expect(appendHistoryEntry([first], duplicate)).toEqual([first])
+  })
+
+  it('detects existing question and answer entries by question id', () => {
+    const entries = [
+      createQuestionEntry('self', 'Glasses?', 'q-3'),
+      createAnswerEntry('opponent', 'yes', 'q-3'),
+    ]
+
+    expect(hasQuestionForId(entries, 'q-3')).toBe(true)
+    expect(hasQuestionForId(entries, 'q-4')).toBe(false)
+    expect(hasAnswerForQuestion(entries, 'q-3')).toBe(true)
+    expect(hasAnswerForQuestion(entries, 'q-4')).toBe(false)
   })
 })

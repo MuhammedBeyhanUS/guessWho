@@ -79,6 +79,39 @@ describe('useQuestionHistory', () => {
     })
   })
 
+  it('ignores duplicate opponent question and answer messages', () => {
+    let messageHandler: ((message: P2PMessage) => void) | undefined
+
+    const onMessage = vi.fn((handler: (message: P2PMessage) => void) => {
+      messageHandler = handler
+      return () => {}
+    })
+
+    const { result } = renderHook(() =>
+      useQuestionHistory({
+        onMessage,
+        connectionState: 'connected',
+      }),
+    )
+
+    act(() => {
+      messageHandler?.({ type: 'question', id: 'q-dup', text: 'Hat?' })
+      messageHandler?.({ type: 'question', id: 'q-dup', text: 'Hat?' })
+      messageHandler?.({
+        type: 'answer',
+        questionId: 'q-dup',
+        value: 'no',
+      })
+      messageHandler?.({
+        type: 'answer',
+        questionId: 'q-dup',
+        value: 'no',
+      })
+    })
+
+    expect(result.current.entries).toHaveLength(2)
+  })
+
   it('clears history when disconnected', () => {
     const { result, rerender } = renderHook(
       ({ connectionState }: { connectionState: ConnectionState }) =>

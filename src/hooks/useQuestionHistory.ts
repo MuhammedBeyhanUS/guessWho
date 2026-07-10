@@ -3,6 +3,8 @@ import {
   appendHistoryEntry,
   createAnswerEntry,
   createQuestionEntry,
+  hasAnswerForQuestion,
+  hasQuestionForId,
   type GameHistoryEntry,
 } from '../domain/game/history'
 import type { YesNo } from '../domain/game/types'
@@ -33,22 +35,30 @@ export function useQuestionHistory({
 
     const unsubscribe = onMessageRef.current((message) => {
       if (message.type === 'question') {
-        setEntries((current) =>
-          appendHistoryEntry(
+        setEntries((current) => {
+          if (hasQuestionForId(current, message.id)) {
+            return current
+          }
+
+          return appendHistoryEntry(
             current,
             createQuestionEntry('opponent', message.text, message.id),
-          ),
-        )
+          )
+        })
         return
       }
 
       if (message.type === 'answer') {
-        setEntries((current) =>
-          appendHistoryEntry(
+        setEntries((current) => {
+          if (hasAnswerForQuestion(current, message.questionId)) {
+            return current
+          }
+
+          return appendHistoryEntry(
             current,
             createAnswerEntry('opponent', message.value, message.questionId),
-          ),
-        )
+          )
+        })
       }
     })
 
@@ -56,18 +66,29 @@ export function useQuestionHistory({
   }, [connectionState])
 
   const recordQuestion = useCallback((text: string, questionId: string) => {
-    setEntries((current) =>
-      appendHistoryEntry(
+    setEntries((current) => {
+      if (hasQuestionForId(current, questionId)) {
+        return current
+      }
+
+      return appendHistoryEntry(
         current,
         createQuestionEntry('self', text, questionId),
-      ),
-    )
+      )
+    })
   }, [])
 
   const recordAnswer = useCallback((value: YesNo, questionId: string) => {
-    setEntries((current) =>
-      appendHistoryEntry(current, createAnswerEntry('self', value, questionId)),
-    )
+    setEntries((current) => {
+      if (hasAnswerForQuestion(current, questionId)) {
+        return current
+      }
+
+      return appendHistoryEntry(
+        current,
+        createAnswerEntry('self', value, questionId),
+      )
+    })
   }, [])
 
   return { entries, recordQuestion, recordAnswer }

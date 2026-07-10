@@ -72,6 +72,23 @@ export function appendHistoryEntry(
   return [...entries, entry]
 }
 
+export function hasQuestionForId(
+  entries: GameHistoryEntry[],
+  questionId: string,
+): boolean {
+  const id = questionEntryId(questionId)
+  return entries.some((entry) => entry.type === 'question' && entry.id === id)
+}
+
+export function hasAnswerForQuestion(
+  entries: GameHistoryEntry[],
+  questionId: string,
+): boolean {
+  return entries.some(
+    (entry) => entry.type === 'answer' && entry.questionId === questionId,
+  )
+}
+
 export function actorLabel(actor: GameHistoryActor): string {
   return actor === 'self' ? 'You' : 'Opponent'
 }
