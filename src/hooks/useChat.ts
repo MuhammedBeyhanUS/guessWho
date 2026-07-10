@@ -5,6 +5,11 @@ import {
   createChatP2PMessage,
   p2pChatToDisplayMessage,
 } from '../domain/chat/chatHistory'
+import {
+  createGameLogMessage,
+  formatOpponentAnswered,
+  formatOpponentAsked,
+} from '../domain/chat/gameEvents'
 import type { ChatDisplayMessage } from '../domain/chat/types'
 import type { P2PMessage } from '../transport/protocol'
 import type { ConnectionState } from '../transport/types'
@@ -30,16 +35,40 @@ export function useChat({ send, onMessage, connectionState }: UseChatOptions) {
     }
 
     const unsubscribe = onMessageRef.current((message) => {
-      if (message.type !== 'chat') {
+      if (message.type === 'chat') {
+        setMessages((current) =>
+          appendChatMessage(
+            current,
+            p2pChatToDisplayMessage(message, 'opponent'),
+          ),
+        )
         return
       }
 
-      setMessages((current) =>
-        appendChatMessage(
-          current,
-          p2pChatToDisplayMessage(message, 'opponent'),
-        ),
-      )
+      if (message.type === 'question') {
+        setMessages((current) =>
+          appendChatMessage(
+            current,
+            createGameLogMessage(
+              formatOpponentAsked(message.text),
+              `game-question-${message.id}`,
+            ),
+          ),
+        )
+        return
+      }
+
+      if (message.type === 'answer') {
+        setMessages((current) =>
+          appendChatMessage(
+            current,
+            createGameLogMessage(
+              formatOpponentAnswered(message.value),
+              `game-answer-${message.questionId}`,
+            ),
+          ),
+        )
+      }
     })
 
     return unsubscribe
@@ -63,5 +92,11 @@ export function useChat({ send, onMessage, connectionState }: UseChatOptions) {
     [send],
   )
 
-  return { messages, sendMessage }
+  const appendGameLog = useCallback((text: string, id?: string) => {
+    setMessages((current) =>
+      appendChatMessage(current, createGameLogMessage(text, id)),
+    )
+  }, [])
+
+  return { messages, sendMessage, appendGameLog }
 }

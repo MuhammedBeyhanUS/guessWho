@@ -24,6 +24,7 @@ type UseGameSessionOptions = {
   connectionState: ConnectionState
   send: (message: P2PMessage) => void
   onMessage: (handler: (message: P2PMessage) => void) => () => void
+  appendGameLog?: (text: string, id?: string) => void
   coinFlipDelayMs?: number
   randomCoinFlip?: () => PlayerRole
 }
@@ -104,6 +105,7 @@ export function useGameSession({
   connectionState,
   send,
   onMessage,
+  appendGameLog,
   coinFlipDelayMs = COIN_FLIP_ANIMATION_MS,
   randomCoinFlip = defaultRandomCoinFlip,
 }: UseGameSessionOptions): GameSessionView {
@@ -294,6 +296,7 @@ export function useGameSession({
     localRole,
     setGameState,
     send,
+    appendGameLog,
   })
 
   return {

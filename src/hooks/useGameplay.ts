@@ -17,6 +17,7 @@ import {
   type PlayerRole,
   type YesNo,
 } from '../domain/game'
+import { formatYouAnswered, formatYouAsked } from '../domain/chat/gameEvents'
 import type { P2PMessage } from '../transport/protocol'
 
 export type GameplayMode = 'idle' | 'guess'
@@ -47,6 +48,7 @@ type UseGameplayOptions = {
   localRole: PlayerRole
   setGameState: Dispatch<SetStateAction<GameState>>
   send: (message: P2PMessage) => void
+  appendGameLog?: (text: string, id?: string) => void
 }
 
 function opponentRole(role: PlayerRole): PlayerRole {
@@ -130,6 +132,7 @@ export function useGameplay({
   localRole,
   setGameState,
   send,
+  appendGameLog,
 }: UseGameplayOptions): GameplayView {
   const [gameplayMode, setGameplayMode] = useState<GameplayMode>('idle')
   const [selectedGuessId, setSelectedGuessId] = useState<string | null>(null)
@@ -147,8 +150,9 @@ export function useGameplay({
 
   const submitQuestion = useCallback(
     (text: string) => {
+      const trimmed = text.trim()
       setGameState((current) => {
-        const result = askQuestion(current, localRole, text)
+        const result = askQuestion(current, localRole, trimmed)
         if (!result.ok) {
           return current
         }
@@ -156,7 +160,11 @@ export function useGameplay({
         const next = result.value
         const questionId = next.pendingQuestion?.id
         if (questionId !== undefined) {
-          send({ type: 'question', id: questionId, text: text.trim() })
+          send({ type: 'question', id: questionId, text: trimmed })
+          appendGameLog?.(
+            formatYouAsked(trimmed),
+            `game-question-local-${questionId}`,
+          )
         }
 
         return next
@@ -164,7 +172,7 @@ export function useGameplay({
       setGameplayMode('idle')
       setSelectedGuessId(null)
     },
-    [localRole, send, setGameState],
+    [appendGameLog, localRole, send, setGameState],
   )
 
   const submitAnswer = useCallback(
@@ -178,12 +186,16 @@ export function useGameplay({
         const questionId = current.pendingQuestion?.id
         if (questionId !== undefined) {
           send({ type: 'answer', questionId, value })
+          appendGameLog?.(
+            formatYouAnswered(value),
+            `game-answer-local-${questionId}`,
+          )
         }
 
         return result.value
       })
     },
-    [localRole, send, setGameState],
+    [appendGameLog, localRole, send, setGameState],
   )
 
   const submitGuess = useCallback(

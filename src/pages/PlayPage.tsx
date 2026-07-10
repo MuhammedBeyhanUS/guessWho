@@ -34,7 +34,11 @@ function PlayPage() {
     roomCode,
     isHost,
   })
-  const { messages: chatMessages, sendMessage } = useChat({
+  const {
+    messages: chatMessages,
+    sendMessage,
+    appendGameLog,
+  } = useChat({
     send,
     onMessage,
     connectionState,
@@ -72,6 +76,7 @@ function PlayPage() {
     connectionState,
     send,
     onMessage,
+    appendGameLog,
   })
 
   const shareUrl = roomCode ? getShareableUrl(roomCode) : ''

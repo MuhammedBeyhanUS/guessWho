@@ -62,6 +62,7 @@ describe('chatHistory', () => {
       text: 'Ready?',
       sentAt: 99,
       sender: 'opponent',
+      kind: 'chat',
     })
   })
 

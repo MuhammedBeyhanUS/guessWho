@@ -38,5 +38,6 @@ export function p2pChatToDisplayMessage(
     text: message.text,
     sentAt: message.sentAt,
     sender,
+    kind: 'chat',
   }
 }

@@ -1,6 +1,5 @@
 import { createInitialBoardState } from '../boardState'
 import { CHARACTERS, getCharacterById } from '../characters'
-import { deriveAnswer } from './questions'
 import { err, ok, type Result } from './result'
 import type {
   GameError,
@@ -309,7 +308,7 @@ export function applyRemoteQuestion(
 export function answerQuestion(
   state: GameState,
   role: PlayerRole,
-  value: YesNo,
+  _value: YesNo,
 ): Result<GameState, GameError> {
   if (state.phase === 'finished') {
     return err('game-finished')
@@ -333,15 +332,8 @@ export function answerQuestion(
     return err('mystery-not-selected')
   }
 
-  const expected = deriveAnswer(pending.text, mysteryId)
-  if (expected === null) {
-    return err('unparseable-question')
-  }
-
-  if (value !== expected) {
-    return err('invalid-answer')
-  }
-
+  // Trust-based answers like the physical game: any yes/no is accepted.
+  // Trait parsing is only used for optional elimination suggestions, not validation.
   return ok({
     ...state,
     pendingQuestion: null,

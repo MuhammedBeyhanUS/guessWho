@@ -120,6 +120,54 @@ describe('useGameplay', () => {
     expect(result.current.gameState.pendingQuestion).not.toBeNull()
   })
 
+  it('logs local question and answer via appendGameLog', () => {
+    const send = vi.fn()
+    const appendGameLog = vi.fn()
+    const initial = setupPlayingGame()
+
+    const { result } = renderHook(() => {
+      const [gameState, setGameState] = useState(initial)
+      const gameplay = useGameplay({
+        gameState,
+        localRole: 'host',
+        setGameState,
+        send,
+        appendGameLog,
+      })
+      return { gameState, gameplay }
+    })
+
+    act(() => {
+      result.current.gameplay.submitQuestion('Does your person wear glasses?')
+    })
+
+    expect(appendGameLog).toHaveBeenCalledWith(
+      'You asked: "Does your person wear glasses?"',
+      expect.stringMatching(/^game-question-local-/),
+    )
+
+    const guestView = renderHook(() => {
+      const [gameState, setGameState] = useState(result.current.gameState)
+      const gameplay = useGameplay({
+        gameState,
+        localRole: 'guest',
+        setGameState,
+        send,
+        appendGameLog,
+      })
+      return { gameState, gameplay }
+    })
+
+    act(() => {
+      guestView.result.current.gameplay.submitAnswer('no')
+    })
+
+    expect(appendGameLog).toHaveBeenCalledWith(
+      'You answered: No',
+      expect.stringMatching(/^game-answer-local-/),
+    )
+  })
+
   it('navigates home on play again', () => {
     const send = vi.fn()
     const finished = {

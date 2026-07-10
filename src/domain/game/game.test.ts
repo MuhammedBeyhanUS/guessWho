@@ -145,10 +145,20 @@ describe('turn cycle', () => {
     expectError(guess(state, 'host', 'marco'), 'pending-question')
   })
 
-  it('rejects incorrect answers that do not match mystery traits', () => {
+  it('accepts any yes or no answer on the trust model', () => {
     let state = setupPlayingGame('host')
     state = unwrap(askQuestion(state, 'host', 'Does your person wear glasses?'))
-    expectError(answerQuestion(state, 'guest', 'no'), 'invalid-answer')
+    state = unwrap(answerQuestion(state, 'guest', 'no'))
+    expect(state.pendingQuestion).toBeNull()
+    expect(state.currentPlayer).toBe('guest')
+  })
+
+  it('accepts answers for free-form unparseable questions', () => {
+    let state = setupPlayingGame('host')
+    state = unwrap(askQuestion(state, 'host', 'Is your mystery person Marco?'))
+    state = unwrap(answerQuestion(state, 'guest', 'yes'))
+    expect(state.pendingQuestion).toBeNull()
+    expect(state.currentPlayer).toBe('guest')
   })
 })
 
