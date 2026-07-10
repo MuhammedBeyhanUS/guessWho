@@ -2,6 +2,10 @@
 
 A browser-based two-player Guess Who game with peer-to-peer voice, chat, and game sync.
 
+## Play online
+
+Play at **[https://guesswho.beyhan.us](https://guesswho.beyhan.us)** — create a room, share the link, and join from a second browser or device.
+
 ## Development
 
 ```bash
