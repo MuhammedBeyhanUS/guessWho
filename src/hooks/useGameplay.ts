@@ -152,41 +152,45 @@ export function useGameplay({
   const submitQuestion = useCallback(
     (text: string) => {
       const trimmed = text.trim()
-      const result = askQuestion(gameState, localRole, trimmed)
-      if (!result.ok) {
-        return
-      }
+      setGameState((current) => {
+        const result = askQuestion(current, localRole, trimmed)
+        if (!result.ok) {
+          return current
+        }
 
-      const next = result.value
-      const questionId = next.pendingQuestion?.id
-      setGameState(next)
+        const next = result.value
+        const questionId = next.pendingQuestion?.id
+        if (questionId !== undefined) {
+          send({ type: 'question', id: questionId, text: trimmed })
+          recordQuestion?.(trimmed, questionId)
+        }
+
+        return next
+      })
       setGameplayMode('idle')
       setSelectedGuessId(null)
-
-      if (questionId !== undefined) {
-        send({ type: 'question', id: questionId, text: trimmed })
-        recordQuestion?.(trimmed, questionId)
-      }
     },
-    [gameState, localRole, recordQuestion, send, setGameState],
+    [localRole, recordQuestion, send, setGameState],
   )
 
   const submitAnswer = useCallback(
     (value: YesNo) => {
-      const result = answerQuestion(gameState, localRole, value)
-      if (!result.ok) {
-        return
-      }
+      setGameState((current) => {
+        const result = answerQuestion(current, localRole, value)
+        if (!result.ok) {
+          return current
+        }
 
-      const questionId = gameState.pendingQuestion?.id
-      setGameState(result.value)
+        const questionId = current.pendingQuestion?.id
+        if (questionId !== undefined) {
+          send({ type: 'answer', questionId, value })
+          recordAnswer?.(value, questionId)
+        }
 
-      if (questionId !== undefined) {
-        send({ type: 'answer', questionId, value })
-        recordAnswer?.(value, questionId)
-      }
+        return result.value
+      })
     },
-    [gameState, localRole, recordAnswer, send, setGameState],
+    [localRole, recordAnswer, send, setGameState],
   )
 
   const submitGuess = useCallback(

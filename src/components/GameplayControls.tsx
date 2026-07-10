@@ -46,10 +46,12 @@ function GameplayControls({
     setQuestionText('')
   }
 
-  if (canAnswer && pendingQuestionText !== null) {
+  if (canAnswer) {
     return (
       <section className={sectionClass} aria-label="Answer question">
-        <p className={styles.pendingQuestion}>{pendingQuestionText}</p>
+        <p className={styles.pendingQuestion}>
+          {pendingQuestionText ?? 'Answer the question'}
+        </p>
         <div className={styles.answerButtons}>
           <Button
             variant="primary"

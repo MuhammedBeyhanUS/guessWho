@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { createP2PConnection } from './webrtcConnection'
 import type {
   ConnectionState,
+  MessageHandler,
   P2PConnection,
   VoicePermissionState,
 } from './types'
@@ -26,6 +27,17 @@ type UseP2PConnectionResult = {
   remoteStream: MediaStream | null
 }
 
+function attachMessageBridge(
+  connection: P2PConnection,
+  handlers: Set<MessageHandler>,
+): () => void {
+  return connection.onMessage((message) => {
+    for (const handler of handlers) {
+      handler(message)
+    }
+  })
+}
+
 export function useP2PConnection({
   roomCode,
   isHost,
@@ -40,6 +52,8 @@ export function useP2PConnection({
     useState<VoicePermissionState>('pending')
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const connectionRef = useRef<P2PConnection | null>(null)
+  const messageHandlersRef = useRef(new Set<MessageHandler>())
+  const bridgeUnsubscribeRef = useRef<(() => void) | null>(null)
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
@@ -49,6 +63,10 @@ export function useP2PConnection({
 
     const connection = connectionFactory()
     connectionRef.current = connection
+    bridgeUnsubscribeRef.current = attachMessageBridge(
+      connection,
+      messageHandlersRef.current,
+    )
     setIsMuted(connection.isMuted())
     setVoicePermission(connection.getVoicePermission())
     setRemoteStream(null)
@@ -93,6 +111,8 @@ export function useP2PConnection({
       removeStateListener()
       removeVoicePermissionListener()
       removeRemoteStreamListener()
+      bridgeUnsubscribeRef.current?.()
+      bridgeUnsubscribeRef.current = null
       connection.close()
       connectionRef.current = null
       setRemoteStream(null)
@@ -104,16 +124,23 @@ export function useP2PConnection({
   }, [])
 
   const send = useCallback((message: P2PMessage) => {
-    connectionRef.current?.send(message)
-  }, [])
-
-  const onMessage = useCallback((handler: (message: P2PMessage) => void) => {
     const connection = connectionRef.current
     if (!connection) {
-      return () => {}
+      return
     }
 
-    return connection.onMessage(handler)
+    try {
+      connection.send(message)
+    } catch (error) {
+      console.error('Failed to send P2P message', error)
+    }
+  }, [])
+
+  const onMessage = useCallback((handler: MessageHandler) => {
+    messageHandlersRef.current.add(handler)
+    return () => {
+      messageHandlersRef.current.delete(handler)
+    }
   }, [])
 
   const toggleMute = useCallback(() => {

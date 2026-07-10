@@ -183,6 +183,105 @@ describe('useGameSession', () => {
     expect(hostResult.current.coinFlipVisible).toBe(false)
   })
 
+  it('shows coin result and lets guest ask first when guest wins the flip', async () => {
+    const transport = createMockTransport()
+    const randomCoinFlip = vi.fn(() => 'guest' as const)
+
+    const { result: hostResult } = renderHook(() =>
+      useGameSession({
+        isHost: true,
+        connectionState: 'connected',
+        send: transport.hostSend,
+        onMessage: transport.hostOnMessage,
+        coinFlipDelayMs: 50,
+        randomCoinFlip,
+      }),
+    )
+
+    const { result: guestResult } = renderHook(() =>
+      useGameSession({
+        isHost: false,
+        connectionState: 'connected',
+        send: transport.guestSend,
+        onMessage: transport.guestOnMessage,
+        coinFlipDelayMs: 50,
+        randomCoinFlip,
+      }),
+    )
+
+    act(() => {
+      hostResult.current.selectMysteryCharacter('eleni')
+      hostResult.current.sendReady()
+      guestResult.current.selectMysteryCharacter('marco')
+      guestResult.current.sendReady()
+    })
+
+    expect(hostResult.current.coinFlipResult).toBe('guest')
+    expect(guestResult.current.coinFlipResult).toBe('guest')
+    expect(hostResult.current.coinFlipVisible).toBe(true)
+    expect(guestResult.current.coinFlipVisible).toBe(true)
+
+    await act(async () => {
+      vi.advanceTimersByTime(50)
+    })
+
+    expect(hostResult.current.phase).toBe('playing')
+    expect(guestResult.current.phase).toBe('playing')
+    expect(guestResult.current.canAsk).toBe(true)
+    expect(hostResult.current.canAsk).toBe(false)
+    expect(guestResult.current.coinFlipVisible).toBe(false)
+  })
+
+  it('still starts the game after the game-start timer is rescheduled', async () => {
+    const transport = createMockTransport()
+    const randomCoinFlip = vi.fn(() => 'guest' as const)
+
+    const { result: hostResult, rerender: rerenderHost } = renderHook(
+      ({ coinFlipDelayMs }: { coinFlipDelayMs: number }) =>
+        useGameSession({
+          isHost: true,
+          connectionState: 'connected',
+          send: transport.hostSend,
+          onMessage: transport.hostOnMessage,
+          coinFlipDelayMs,
+          randomCoinFlip,
+        }),
+      { initialProps: { coinFlipDelayMs: 50 } },
+    )
+
+    const { result: guestResult } = renderHook(() =>
+      useGameSession({
+        isHost: false,
+        connectionState: 'connected',
+        send: transport.guestSend,
+        onMessage: transport.guestOnMessage,
+        coinFlipDelayMs: 50,
+        randomCoinFlip,
+      }),
+    )
+
+    act(() => {
+      hostResult.current.selectMysteryCharacter('eleni')
+      hostResult.current.sendReady()
+      guestResult.current.selectMysteryCharacter('marco')
+      guestResult.current.sendReady()
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(25)
+    })
+
+    rerenderHost({ coinFlipDelayMs: 75 })
+
+    await act(async () => {
+      vi.advanceTimersByTime(75)
+    })
+
+    expect(hostResult.current.phase).toBe('playing')
+    expect(guestResult.current.phase).toBe('playing')
+    expect(guestResult.current.canAsk).toBe(true)
+  })
+
   it('shows setup disconnect error when opponent leaves during setup', () => {
     const transport = createMockTransport()
     const { result, rerender } = renderHook(

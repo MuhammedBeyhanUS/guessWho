@@ -118,7 +118,6 @@ export function useGameSession({
   const [sessionError, setSessionError] = useState<string | null>(null)
   const [boardKey, setBoardKey] = useState('setup-0')
   const coinFlipSentRef = useRef(false)
-  const gameStartSentRef = useRef(false)
   const wasConnectedRef = useRef(false)
   const onMessageRef = useRef(onMessage)
   const sendRef = useRef(send)
@@ -149,7 +148,6 @@ export function useGameSession({
       setGameState(createGame())
       setCoinFlipVisible(false)
       coinFlipSentRef.current = false
-      gameStartSentRef.current = false
       setBoardKey('setup-0')
       return
     }
@@ -175,14 +173,10 @@ export function useGameSession({
       if (message.type === 'game-start') {
         setGameState((current) => {
           const result = beginPlaying(current, message.firstPlayer)
-          if (!result.ok) {
-            return current
-          }
-
-          setCoinFlipVisible(false)
-          setBoardKey(`playing-${message.firstPlayer}`)
-          return result.value
+          return result.ok ? result.value : current
         })
+        setCoinFlipVisible(false)
+        setBoardKey(`playing-${message.firstPlayer}`)
         return
       }
 
@@ -202,7 +196,8 @@ export function useGameSession({
     if (
       gameState.phase !== 'setup' ||
       !gameState.ready.host ||
-      !gameState.ready.guest
+      !gameState.ready.guest ||
+      gameState.coinFlipResult !== null
     ) {
       return
     }
@@ -213,19 +208,19 @@ export function useGameSession({
 
     coinFlipSentRef.current = true
     const result = randomCoinFlip()
+    const flipResult = applyCoinFlip(gameState, result)
+    if (!flipResult.ok) {
+      coinFlipSentRef.current = false
+      return
+    }
 
-    setGameState((current) => {
-      const flipResult = applyCoinFlip(current, result)
-      return flipResult.ok ? flipResult.value : current
-    })
+    setGameState(flipResult.value)
     setCoinFlipVisible(true)
     sendRef.current({ type: 'coin-flip', result })
   }, [
     isHost,
     connectionState,
-    gameState.phase,
-    gameState.ready.host,
-    gameState.ready.guest,
+    gameState,
     randomCoinFlip,
   ])
 
@@ -238,25 +233,16 @@ export function useGameSession({
       return
     }
 
-    if (gameStartSentRef.current) {
-      return
-    }
-
-    gameStartSentRef.current = true
     const firstPlayer = gameState.coinFlipResult
 
     const timer = window.setTimeout(() => {
       sendRef.current({ type: 'game-start', firstPlayer })
       setGameState((current) => {
         const startResult = beginPlaying(current, firstPlayer)
-        if (!startResult.ok) {
-          return current
-        }
-
-        setCoinFlipVisible(false)
-        setBoardKey(`playing-${firstPlayer}`)
-        return startResult.value
+        return startResult.ok ? startResult.value : current
       })
+      setCoinFlipVisible(false)
+      setBoardKey(`playing-${firstPlayer}`)
     }, coinFlipDelayMs)
 
     return () => {
