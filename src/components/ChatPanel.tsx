@@ -58,12 +58,9 @@ function ChatPanel({ messages, onSend, disabled = false }: ChatPanelProps) {
                 styles.message,
                 message.sender === 'self'
                   ? styles.messageSelf
-                  : message.sender === 'opponent'
-                    ? styles.messageOpponent
-                    : styles.messageSystem,
+                  : styles.messageOpponent,
               ].join(' ')}
               data-sender={message.sender}
-              data-kind={message.kind ?? 'chat'}
             >
               {message.text}
             </div>

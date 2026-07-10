@@ -5,6 +5,19 @@
   box-shadow: 0 4px 16px rgba(26, 26, 46, 0.06);
 }
 
+.inlineVoice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inlineControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .panelTitle {
   margin: 0 0 0.5rem;
   font-size: 0.875rem;

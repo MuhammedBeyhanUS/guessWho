@@ -4,6 +4,7 @@ import GameSessionLayout from '../components/GameSessionLayout'
 import { getShareableUrl } from '../domain/roomCode'
 import { useChat } from '../hooks/useChat'
 import { useGameSession } from '../hooks/useGameSession'
+import { useQuestionHistory } from '../hooks/useQuestionHistory'
 import {
   getConnectionStatusLabel,
   useP2PConnection,
@@ -34,12 +35,16 @@ function PlayPage() {
     roomCode,
     isHost,
   })
-  const {
-    messages: chatMessages,
-    sendMessage,
-    appendGameLog,
-  } = useChat({
+  const { messages: chatMessages, sendMessage } = useChat({
     send,
+    onMessage,
+    connectionState,
+  })
+  const {
+    entries: questionHistory,
+    recordQuestion,
+    recordAnswer,
+  } = useQuestionHistory({
     onMessage,
     connectionState,
   })
@@ -76,7 +81,8 @@ function PlayPage() {
     connectionState,
     send,
     onMessage,
-    appendGameLog,
+    recordQuestion,
+    recordAnswer,
   })
 
   const shareUrl = roomCode ? getShareableUrl(roomCode) : ''
@@ -126,6 +132,7 @@ function PlayPage() {
       copyFeedback={copyFeedback}
       chatMessages={chatMessages}
       onSendChatMessage={sendMessage}
+      questionHistory={questionHistory}
       isMuted={isMuted}
       onToggleMute={toggleMute}
       voicePermission={voicePermission}

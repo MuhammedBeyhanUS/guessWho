@@ -4,8 +4,10 @@ import ChatPanel from './ChatPanel'
 import CoinFlipOverlay from './CoinFlipOverlay'
 import GameOverOverlay from './GameOverOverlay'
 import GameplayControls from './GameplayControls'
+import QuestionHistoryPanel from './QuestionHistoryPanel'
 import VoiceControlBar from './VoiceControlBar'
 import type { ChatDisplayMessage } from '../domain/chat/types'
+import type { GameHistoryEntry } from '../domain/game/history'
 import type { PlayerRole, YesNo } from '../domain/game/types'
 import type { TileState } from '../domain/boardState'
 import type { ConnectionState, VoicePermissionState } from '../transport/types'
@@ -25,6 +27,7 @@ export type GameSessionLayoutProps = {
   copyFeedback?: string | null
   chatMessages?: ChatDisplayMessage[]
   onSendChatMessage?: (text: string) => void
+  questionHistory?: GameHistoryEntry[]
   isMuted?: boolean
   onToggleMute?: () => void
   voicePermission?: VoicePermissionState
@@ -73,6 +76,7 @@ function GameSessionLayout({
   copyFeedback,
   chatMessages = [],
   onSendChatMessage,
+  questionHistory = [],
   isMuted = false,
   onToggleMute,
   voicePermission = 'pending',
@@ -116,15 +120,25 @@ function GameSessionLayout({
   return (
     <main className={styles.layout}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Guess Who</h1>
-        <p className={styles.roleBadge} data-role={isHost ? 'host' : 'guest'}>
-          You are the {roleLabel}
-        </p>
-        {roomCode ? (
-          <p className={styles.roomCode} aria-label={`Room code ${roomCode}`}>
-            Room: {roomCode}
+        <div className={styles.headerMain}>
+          <h1 className={styles.title}>Guess Who</h1>
+          <p className={styles.roleBadge} data-role={isHost ? 'host' : 'guest'}>
+            You are the {roleLabel}
           </p>
-        ) : null}
+          {roomCode ? (
+            <p className={styles.roomCode} aria-label={`Room code ${roomCode}`}>
+              Room: {roomCode}
+            </p>
+          ) : null}
+        </div>
+        <p
+          className={styles.headerConnection}
+          data-state={connectionState}
+          role="status"
+        >
+          <span className={styles.connectionDot} aria-hidden="true" />
+          {connectionLabel}
+        </p>
       </header>
 
       <div className={styles.sessionBody}>
@@ -149,52 +163,70 @@ function GameSessionLayout({
         </section>
 
         <aside className={styles.sidePanel}>
-          <section className={styles.opponentPanel} aria-label="Opponent">
-            <h2 className={styles.panelTitle}>Opponent</h2>
-            <p className={styles.opponentRole}>{opponentRoleLabel}</p>
-            <p
-              className={styles.connectionIndicator}
-              data-state={connectionState}
-              role="status"
-            >
-              {connectionLabel}
-            </p>
-          </section>
+          <div className={styles.sidebarCard}>
+            <div className={styles.sidebarMeta} aria-label="Opponent">
+              <div className={styles.opponentInfo}>
+                <span className={styles.metaLabel}>Opponent</span>
+                <span className={styles.opponentRole}>{opponentRoleLabel}</span>
+              </div>
+            </div>
 
-          <section className={styles.chatPanel} aria-label="Text chat">
-            <h2 className={styles.panelTitle}>Chat</h2>
-            <ChatPanel
-              messages={chatMessages}
-              onSend={onSendChatMessage ?? (() => {})}
-              disabled={!isConnected || !onSendChatMessage}
-            />
-          </section>
+            {playingPhase ? (
+              <>
+                <div className={styles.sectionDivider} aria-hidden="true" />
+                <GameplayControls
+                  embedded
+                  canAsk={canAsk}
+                  canAnswer={canAnswer}
+                  canGuess={canGuess}
+                  gameplayMode={gameplayMode}
+                  pendingQuestionText={pendingQuestionText}
+                  selectedGuessId={selectedGuessId}
+                  onSubmitQuestion={onSubmitQuestion ?? (() => {})}
+                  onSubmitAnswer={onSubmitAnswer ?? (() => {})}
+                  onEnterGuessMode={onEnterGuessMode ?? (() => {})}
+                  onExitGuessMode={onExitGuessMode ?? (() => {})}
+                  onConfirmGuess={onConfirmGuess ?? (() => {})}
+                />
+              </>
+            ) : null}
 
-          <VoiceControlBar
-            connectionState={connectionState}
-            isMuted={isMuted}
-            permissionDenied={voicePermission === 'denied'}
-            micAvailable={voicePermission === 'granted'}
-            onToggleMute={onToggleMute ?? (() => {})}
-            remoteAudioRef={remoteAudioRef ?? { current: null }}
-            remoteStream={remoteStream}
-          />
+            {playingPhase ? (
+              <>
+                <div className={styles.sectionDivider} aria-hidden="true" />
+                <section
+                  className={styles.historySection}
+                  aria-label="Question and answer history"
+                >
+                  <h2 className={styles.sectionTitle}>Q&amp;A History</h2>
+                  <QuestionHistoryPanel entries={questionHistory} />
+                </section>
+              </>
+            ) : null}
 
-          {playingPhase ? (
-            <GameplayControls
-              canAsk={canAsk}
-              canAnswer={canAnswer}
-              canGuess={canGuess}
-              gameplayMode={gameplayMode}
-              pendingQuestionText={pendingQuestionText}
-              selectedGuessId={selectedGuessId}
-              onSubmitQuestion={onSubmitQuestion ?? (() => {})}
-              onSubmitAnswer={onSubmitAnswer ?? (() => {})}
-              onEnterGuessMode={onEnterGuessMode ?? (() => {})}
-              onExitGuessMode={onExitGuessMode ?? (() => {})}
-              onConfirmGuess={onConfirmGuess ?? (() => {})}
-            />
-          ) : null}
+            <div className={styles.sectionDivider} aria-hidden="true" />
+
+            <section className={styles.commSection} aria-label="Text chat">
+              <div className={styles.commHeader}>
+                <h2 className={styles.sectionTitle}>Chat</h2>
+                <VoiceControlBar
+                  variant="inline"
+                  connectionState={connectionState}
+                  isMuted={isMuted}
+                  permissionDenied={voicePermission === 'denied'}
+                  micAvailable={voicePermission === 'granted'}
+                  onToggleMute={onToggleMute ?? (() => {})}
+                  remoteAudioRef={remoteAudioRef ?? { current: null }}
+                  remoteStream={remoteStream}
+                />
+              </div>
+              <ChatPanel
+                messages={chatMessages}
+                onSend={onSendChatMessage ?? (() => {})}
+                disabled={!isConnected || !onSendChatMessage}
+              />
+            </section>
+          </div>
         </aside>
       </div>
 

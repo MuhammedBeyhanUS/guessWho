@@ -16,6 +16,7 @@ import {
 } from './useGameplay'
 import type { P2PMessage } from '../transport/protocol'
 import type { ConnectionState } from '../transport/types'
+import type { YesNo } from '../domain/game/types'
 
 export const COIN_FLIP_ANIMATION_MS = 1500
 
@@ -24,7 +25,8 @@ type UseGameSessionOptions = {
   connectionState: ConnectionState
   send: (message: P2PMessage) => void
   onMessage: (handler: (message: P2PMessage) => void) => () => void
-  appendGameLog?: (text: string, id?: string) => void
+  recordQuestion?: (text: string, questionId: string) => void
+  recordAnswer?: (value: YesNo, questionId: string) => void
   coinFlipDelayMs?: number
   randomCoinFlip?: () => PlayerRole
 }
@@ -105,7 +107,8 @@ export function useGameSession({
   connectionState,
   send,
   onMessage,
-  appendGameLog,
+  recordQuestion,
+  recordAnswer,
   coinFlipDelayMs = COIN_FLIP_ANIMATION_MS,
   randomCoinFlip = defaultRandomCoinFlip,
 }: UseGameSessionOptions): GameSessionView {
@@ -296,7 +299,8 @@ export function useGameSession({
     localRole,
     setGameState,
     send,
-    appendGameLog,
+    recordQuestion,
+    recordAnswer,
   })
 
   return {

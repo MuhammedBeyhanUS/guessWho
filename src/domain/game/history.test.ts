@@ -1,0 +1,36 @@
+import { describe, expect, it } from 'vitest'
+import {
+  appendHistoryEntry,
+  createAnswerEntry,
+  createQuestionEntry,
+} from './history'
+
+describe('game history', () => {
+  it('creates question and answer entries with stable ids', () => {
+    expect(
+      createQuestionEntry('self', '  Does your person wear glasses? ', 'q-1'),
+    ).toEqual({
+      id: 'history-question-q-1',
+      type: 'question',
+      actor: 'self',
+      text: 'Does your person wear glasses?',
+      sentAt: expect.any(Number),
+    })
+
+    expect(createAnswerEntry('opponent', 'yes', 'q-1', 42)).toEqual({
+      id: 'history-answer-q-1-opponent',
+      type: 'answer',
+      actor: 'opponent',
+      value: 'yes',
+      questionId: 'q-1',
+      sentAt: 42,
+    })
+  })
+
+  it('deduplicates entries by id', () => {
+    const first = createQuestionEntry('self', 'Is your person bald?', 'q-2')
+    const duplicate = createQuestionEntry('self', 'Is your person bald?', 'q-2')
+
+    expect(appendHistoryEntry([first], duplicate)).toEqual([first])
+  })
+})

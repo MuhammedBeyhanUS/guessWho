@@ -73,21 +73,4 @@ describe('ChatPanel', () => {
     expect(message).toHaveAttribute('data-sender', 'self')
     expect(message.className).toContain('messageSelf')
   })
-
-  it('renders system game log messages with centered styling', () => {
-    const gameMessage: ChatDisplayMessage = {
-      id: 'msg-game',
-      text: 'Opponent answered: Yes',
-      sentAt: 3,
-      sender: 'system',
-      kind: 'game',
-    }
-
-    render(<ChatPanel messages={[gameMessage]} onSend={vi.fn()} />)
-
-    const message = screen.getByText('Opponent answered: Yes')
-    expect(message).toHaveAttribute('data-sender', 'system')
-    expect(message).toHaveAttribute('data-kind', 'game')
-    expect(message.className).toContain('messageSystem')
-  })
 })

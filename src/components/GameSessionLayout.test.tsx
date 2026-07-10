@@ -117,6 +117,7 @@ describe('GameSessionLayout', () => {
     render(
       <GameSessionLayout
         {...defaultProps}
+        playingPhase
         statusText="Your turn"
         selectionMode={false}
       />,
@@ -177,6 +178,32 @@ describe('GameSessionLayout', () => {
     expect(
       screen.queryByRole('button', { name: /^no$/i }),
     ).not.toBeInTheDocument()
+  })
+
+  it('shows Q&A history panel during playing phase', () => {
+    render(
+      <GameSessionLayout
+        {...defaultProps}
+        playingPhase
+        questionHistory={[
+          {
+            id: 'history-question-q-1',
+            type: 'question',
+            actor: 'opponent',
+            text: 'Does your person wear glasses?',
+            sentAt: 1,
+          },
+        ]}
+      />,
+    )
+
+    expect(
+      screen.getByLabelText('Question and answer history'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Opponent asked')).toBeInTheDocument()
+    expect(
+      screen.getByText('“Does your person wear glasses?”'),
+    ).toBeInTheDocument()
   })
 
   it('shows game over screen with winner text', () => {

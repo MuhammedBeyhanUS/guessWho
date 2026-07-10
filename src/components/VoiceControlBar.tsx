@@ -10,6 +10,7 @@ export type VoiceControlBarProps = {
   onToggleMute: () => void
   remoteAudioRef: RefObject<HTMLAudioElement | null>
   remoteStream: MediaStream | null
+  variant?: 'card' | 'inline'
 }
 
 function VoiceControlBar({
@@ -20,6 +21,7 @@ function VoiceControlBar({
   onToggleMute,
   remoteAudioRef,
   remoteStream,
+  variant = 'card',
 }: VoiceControlBarProps) {
   const isConnected = connectionState === 'connected'
   const muteLabel = isMuted ? 'Unmute microphone' : 'Mute microphone'
@@ -43,6 +45,61 @@ function VoiceControlBar({
     })
   }, [remoteAudioRef, remoteStream])
 
+  const controls = (
+    <div
+      className={
+        variant === 'inline' ? styles.inlineControls : styles.voiceControls
+      }
+    >
+      <button
+        type="button"
+        className={styles.voiceButton}
+        onClick={onToggleMute}
+        disabled={!isConnected || !micAvailable}
+        aria-label={muteLabel}
+        aria-pressed={isMuted}
+      >
+        {muteButtonText}
+      </button>
+      <span
+        className={styles.micStatus}
+        data-state={permissionDenied ? 'unavailable' : isMuted ? 'off' : 'on'}
+        role="status"
+      >
+        {micStatus}
+      </span>
+      {variant === 'card' ? (
+        <span
+          className={styles.voiceConnection}
+          data-state={connectionState}
+          role="status"
+        >
+          {isConnected ? 'Voice linked' : 'Voice waiting'}
+        </span>
+      ) : null}
+    </div>
+  )
+
+  if (variant === 'inline') {
+    return (
+      <div className={styles.inlineVoice} aria-label="Voice controls">
+        {permissionDenied ? (
+          <p className={styles.permissionBanner} role="status">
+            Microphone access was denied. Voice chat is unavailable, but you can
+            still play and use text chat.
+          </p>
+        ) : null}
+        {controls}
+        <audio
+          ref={remoteAudioRef}
+          autoPlay
+          playsInline
+          className={styles.remoteAudio}
+        />
+      </div>
+    )
+  }
+
   return (
     <section className={styles.voiceBar} aria-label="Voice controls">
       <h2 className={styles.panelTitle}>Voice</h2>
@@ -54,32 +111,7 @@ function VoiceControlBar({
         </p>
       ) : null}
 
-      <div className={styles.voiceControls}>
-        <button
-          type="button"
-          className={styles.voiceButton}
-          onClick={onToggleMute}
-          disabled={!isConnected || !micAvailable}
-          aria-label={muteLabel}
-          aria-pressed={isMuted}
-        >
-          {muteButtonText}
-        </button>
-        <span
-          className={styles.micStatus}
-          data-state={permissionDenied ? 'unavailable' : isMuted ? 'off' : 'on'}
-          role="status"
-        >
-          {micStatus}
-        </span>
-        <span
-          className={styles.voiceConnection}
-          data-state={connectionState}
-          role="status"
-        >
-          {isConnected ? 'Voice linked' : 'Voice waiting'}
-        </span>
-      </div>
+      {controls}
 
       <audio
         ref={remoteAudioRef}

@@ -120,9 +120,10 @@ describe('useGameplay', () => {
     expect(result.current.gameState.pendingQuestion).not.toBeNull()
   })
 
-  it('logs local question and answer via appendGameLog', () => {
+  it('records local question and answer once', () => {
     const send = vi.fn()
-    const appendGameLog = vi.fn()
+    const recordQuestion = vi.fn()
+    const recordAnswer = vi.fn()
     const initial = setupPlayingGame()
 
     const { result } = renderHook(() => {
@@ -132,7 +133,8 @@ describe('useGameplay', () => {
         localRole: 'host',
         setGameState,
         send,
-        appendGameLog,
+        recordQuestion,
+        recordAnswer,
       })
       return { gameState, gameplay }
     })
@@ -141,9 +143,10 @@ describe('useGameplay', () => {
       result.current.gameplay.submitQuestion('Does your person wear glasses?')
     })
 
-    expect(appendGameLog).toHaveBeenCalledWith(
-      'You asked: "Does your person wear glasses?"',
-      expect.stringMatching(/^game-question-local-/),
+    expect(recordQuestion).toHaveBeenCalledTimes(1)
+    expect(recordQuestion).toHaveBeenCalledWith(
+      'Does your person wear glasses?',
+      expect.stringMatching(/^question-/),
     )
 
     const guestView = renderHook(() => {
@@ -153,7 +156,8 @@ describe('useGameplay', () => {
         localRole: 'guest',
         setGameState,
         send,
-        appendGameLog,
+        recordQuestion,
+        recordAnswer,
       })
       return { gameState, gameplay }
     })
@@ -162,9 +166,10 @@ describe('useGameplay', () => {
       guestView.result.current.gameplay.submitAnswer('no')
     })
 
-    expect(appendGameLog).toHaveBeenCalledWith(
-      'You answered: No',
-      expect.stringMatching(/^game-answer-local-/),
+    expect(recordAnswer).toHaveBeenCalledTimes(1)
+    expect(recordAnswer).toHaveBeenCalledWith(
+      'no',
+      expect.stringMatching(/^question-/),
     )
   })
 

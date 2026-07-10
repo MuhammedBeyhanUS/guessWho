@@ -15,6 +15,7 @@ export type GameplayControlsProps = {
   onEnterGuessMode: () => void
   onExitGuessMode: () => void
   onConfirmGuess: () => void
+  embedded?: boolean
 }
 
 function GameplayControls({
@@ -29,8 +30,10 @@ function GameplayControls({
   onEnterGuessMode,
   onExitGuessMode,
   onConfirmGuess,
+  embedded = false,
 }: GameplayControlsProps) {
   const [questionText, setQuestionText] = useState('')
+  const sectionClass = embedded ? styles.controlsEmbedded : styles.controls
 
   function handleAskSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -45,7 +48,7 @@ function GameplayControls({
 
   if (canAnswer && pendingQuestionText !== null) {
     return (
-      <section className={styles.controls} aria-label="Answer question">
+      <section className={sectionClass} aria-label="Answer question">
         <p className={styles.pendingQuestion}>{pendingQuestionText}</p>
         <div className={styles.answerButtons}>
           <Button
@@ -69,7 +72,7 @@ function GameplayControls({
 
   if (gameplayMode === 'guess') {
     return (
-      <section className={styles.controls} aria-label="Guess character">
+      <section className={sectionClass} aria-label="Guess character">
         <p className={styles.guessHint}>
           {selectedGuessId
             ? 'Confirm your guess on the board'
@@ -96,7 +99,7 @@ function GameplayControls({
   }
 
   return (
-    <section className={styles.controls} aria-label="Ask or guess">
+    <section className={sectionClass} aria-label="Ask or guess">
       <form className={styles.askForm} onSubmit={handleAskSubmit}>
         <label className={styles.askLabel} htmlFor="game-question">
           Your yes/no question

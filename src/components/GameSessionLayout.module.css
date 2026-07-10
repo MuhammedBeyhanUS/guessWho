@@ -10,6 +10,14 @@
 .header {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+}
+
+.headerMain {
+  display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.75rem 1.5rem;
 }
@@ -47,11 +55,47 @@
   color: #4a4a6a;
 }
 
+.headerConnection {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #7a7a9a;
+  background: #f8f9fa;
+  border-radius: 999px;
+}
+
+.headerConnection[data-state='connected'] {
+  color: #2f9e44;
+  background: #ebfbee;
+}
+
+.headerConnection[data-state='failed'] {
+  color: #e03131;
+  background: #fff5f5;
+}
+
+.headerConnection[data-state='connecting'] {
+  color: #364fc7;
+  background: #edf2ff;
+}
+
+.connectionDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 .sessionBody {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 1rem;
+  min-height: 0;
 }
 
 .boardPanel {
@@ -62,21 +106,33 @@
 .sidePanel {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  min-width: 0;
 }
 
-.opponentPanel,
-.chatPanel,
-.voiceBar {
+.sidebarCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   padding: 1rem;
   background: #ffffff;
   border-radius: 0.75rem;
   box-shadow: 0 4px 16px rgba(26, 26, 46, 0.06);
 }
 
-.panelTitle {
-  margin: 0 0 0.5rem;
-  font-size: 0.875rem;
+.sidebarMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.opponentInfo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.metaLabel {
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -84,55 +140,49 @@
 }
 
 .opponentRole {
-  margin: 0 0 0.25rem;
-  font-size: 1.125rem;
+  margin: 0;
+  font-size: 1rem;
   font-weight: 600;
   color: #1a1a2e;
 }
 
-.connectionIndicator {
-  margin: 0;
-  font-size: 0.875rem;
+.sectionDivider {
+  height: 1px;
+  background: #e9ecef;
+}
+
+.sectionTitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: #7a7a9a;
 }
 
-.connectionIndicator[data-state='connected'] {
-  color: #2f9e44;
-  font-weight: 600;
-}
-
-.connectionIndicator[data-state='failed'] {
-  color: #e03131;
-  font-weight: 600;
-}
-
-.placeholder {
-  margin: 0;
-  font-size: 0.9375rem;
-  color: #7a7a9a;
-}
-
-.voiceControls {
+.historySection {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.commSection {
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
+  min-height: 0;
 }
 
-.voiceButton {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #4a4a6a;
-  background: #f1f3f5;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: not-allowed;
-  opacity: 0.7;
+.commHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
 }
 
-.micStatus {
-  font-size: 0.875rem;
-  color: #7a7a9a;
+.commHeader .sectionTitle {
+  margin: 0;
 }
 
 .statusBar {
@@ -156,12 +206,6 @@
 
 .readyButton {
   min-width: 8rem;
-}
-
-.readyHint {
-  margin: 0;
-  font-size: 0.875rem;
-  color: #7a7a9a;
 }
 
 .overlay {
@@ -250,16 +294,45 @@
 
   .sessionBody {
     flex-direction: row;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
+  .boardPanel {
+    flex: 3;
+  }
+
+  .sidePanel {
+    flex: 2;
+    min-width: 18rem;
+    max-width: 24rem;
+  }
+
+  .sidebarCard {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 10rem);
+    overflow: hidden;
+  }
+
+  .historySection {
+    flex: 0 1 auto;
+    max-height: 10rem;
+    overflow: hidden;
+  }
+
+  .commSection {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 1100px) {
   .boardPanel {
     flex: 2;
   }
 
   .sidePanel {
-    flex: 1;
-    min-width: 16rem;
     max-width: 22rem;
   }
 }
