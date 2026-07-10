@@ -11,8 +11,10 @@ import {
   applyRemoteQuestion,
   askQuestion,
   flipBoardTile,
+  getGameOverPresentation,
   resolveGuess,
   validateGuessRequest,
+  type GameOverPresentation,
   type GameState,
   type PlayerRole,
   type YesNo,
@@ -30,6 +32,7 @@ export type GameplayView = {
   pendingQuestionText: string | null
   selectedGuessId: string | null
   gameOverVisible: boolean
+  gameOverPresentation: GameOverPresentation | null
   winnerLabel: string | null
   isWinner: boolean
   submitQuestion: (text: string) => void
@@ -239,6 +242,10 @@ export function useGameplay({
   const gameOverVisible =
     gameState.phase === 'finished' && gameState.winner !== null
 
+  const gameOverPresentation = gameOverVisible
+    ? getGameOverPresentation(gameState, localRole)
+    : null
+
   return {
     gameplayMode,
     isMyTurn,
@@ -248,6 +255,7 @@ export function useGameplay({
     pendingQuestionText: pending?.text ?? null,
     selectedGuessId,
     gameOverVisible,
+    gameOverPresentation,
     winnerLabel: getWinnerLabel(gameState, localRole),
     isWinner: gameState.winner === localRole,
     submitQuestion,

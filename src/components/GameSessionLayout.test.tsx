@@ -206,7 +206,7 @@ describe('GameSessionLayout', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows game over screen with winner text', () => {
+  it('shows game over screen with guess result and character reveal', () => {
     const onPlayAgain = vi.fn()
     render(
       <GameSessionLayout
@@ -214,13 +214,22 @@ describe('GameSessionLayout', () => {
         playingPhase
         statusText="Game over"
         gameOverVisible
-        winnerLabel="You win!"
+        gameOverPresentation={{
+          title: 'Wrong guess',
+          message: 'The mystery person was actually:',
+          revealedCharacterId: 'marco',
+          isLocalWinner: false,
+        }}
         onPlayAgain={onPlayAgain}
       />,
     )
 
-    expect(screen.getByLabelText('Game over')).toBeInTheDocument()
-    expect(screen.getByText('You win!')).toBeInTheDocument()
+    const gameOver = screen.getByLabelText('Game over')
+    expect(gameOver).toBeInTheDocument()
+    expect(screen.getByText('Wrong guess')).toBeInTheDocument()
+    expect(
+      within(gameOver).getByRole('img', { name: 'Marco' }),
+    ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /play again/i }))
     expect(onPlayAgain).toHaveBeenCalled()
   })

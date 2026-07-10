@@ -8,6 +8,7 @@ import QuestionHistoryPanel from './QuestionHistoryPanel'
 import VoiceControlBar from './VoiceControlBar'
 import type { ChatDisplayMessage } from '../domain/chat/types'
 import type { GameHistoryEntry } from '../domain/game/history'
+import type { GameOverPresentation } from '../domain/game/presentation'
 import type { PlayerRole, YesNo } from '../domain/game/types'
 import type { TileState } from '../domain/boardState'
 import type { ConnectionState, VoicePermissionState } from '../transport/types'
@@ -59,7 +60,7 @@ export type GameSessionLayoutProps = {
   onExitGuessMode?: () => void
   onConfirmGuess?: () => void
   gameOverVisible?: boolean
-  winnerLabel?: string | null
+  gameOverPresentation?: GameOverPresentation | null
   onPlayAgain?: () => void
 }
 
@@ -108,7 +109,7 @@ function GameSessionLayout({
   onExitGuessMode,
   onConfirmGuess,
   gameOverVisible = false,
-  winnerLabel = null,
+  gameOverPresentation = null,
   onPlayAgain,
 }: GameSessionLayoutProps) {
   const isConnected = connectionState === 'connected'
@@ -249,7 +250,7 @@ function GameSessionLayout({
 
       <GameOverOverlay
         visible={gameOverVisible}
-        winnerLabel={winnerLabel}
+        presentation={gameOverPresentation}
         onPlayAgain={onPlayAgain ?? (() => {})}
       />
 

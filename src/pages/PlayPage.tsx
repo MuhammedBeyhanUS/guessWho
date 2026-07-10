@@ -67,7 +67,7 @@ function PlayPage() {
     pendingQuestionText,
     selectedGuessId,
     gameOverVisible,
-    winnerLabel,
+    gameOverPresentation,
     submitQuestion,
     submitAnswer,
     submitGuess,
@@ -168,7 +168,7 @@ function PlayPage() {
         }
       }}
       gameOverVisible={gameOverVisible}
-      winnerLabel={winnerLabel}
+      gameOverPresentation={gameOverPresentation}
       onPlayAgain={playAgain}
     />
   )

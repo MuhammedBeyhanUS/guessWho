@@ -37,3 +37,5 @@ export type {
   PendingQuestion,
   GameOverReason,
 } from './types'
+export { getGameOverPresentation } from './presentation'
+export type { GameOverPresentation } from './presentation'
