@@ -71,11 +71,7 @@ describe('useChat', () => {
   it('clears chat history when disconnected', () => {
     const onMessage = vi.fn(() => () => {})
     const { result, rerender } = renderHook(
-      ({
-        connectionState,
-      }: {
-        connectionState: ConnectionState
-      }) =>
+      ({ connectionState }: { connectionState: ConnectionState }) =>
         useChat({
           send: vi.fn(),
           onMessage,

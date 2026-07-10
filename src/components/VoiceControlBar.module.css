@@ -1,0 +1,85 @@
+.voiceBar {
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 16px rgba(26, 26, 46, 0.06);
+}
+
+.panelTitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7a7a9a;
+}
+
+.permissionBanner {
+  margin: 0 0 0.75rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #862e00;
+  background: #fff4e6;
+  border-radius: 0.5rem;
+}
+
+.voiceControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.voiceButton {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #364fc7;
+  background: #edf2ff;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.voiceButton:disabled {
+  color: #4a4a6a;
+  background: #f1f3f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.micStatus {
+  font-size: 0.875rem;
+  color: #7a7a9a;
+}
+
+.micStatus[data-state='on'] {
+  color: #2f9e44;
+  font-weight: 600;
+}
+
+.micStatus[data-state='off'] {
+  color: #e03131;
+  font-weight: 600;
+}
+
+.micStatus[data-state='unavailable'] {
+  color: #862e00;
+  font-weight: 600;
+}
+
+.voiceConnection {
+  margin-left: auto;
+  font-size: 0.8125rem;
+  color: #7a7a9a;
+}
+
+.voiceConnection[data-state='connected'] {
+  color: #2f9e44;
+  font-weight: 600;
+}
+
+.remoteAudio {
+  display: none;
+}

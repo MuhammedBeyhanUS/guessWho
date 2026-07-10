@@ -15,19 +15,26 @@ import type {
   ConnectionStateHandler,
   MessageHandler,
   P2PConnection,
+  RemoteStreamHandler,
+  VoicePermissionHandler,
+  VoicePermissionState,
 } from './types'
+import { setTrackMuted } from './voice'
 
 const DATA_CHANNEL_LABEL = 'game'
 
 type WebRtcGlobals = {
   RTCPeerConnection: typeof RTCPeerConnection
   WebSocket: typeof WebSocket
+  getUserMedia?: (constraints: MediaStreamConstraints) => Promise<MediaStream>
 }
 
 function getWebRtcGlobals(): WebRtcGlobals {
   return {
     RTCPeerConnection: globalThis.RTCPeerConnection,
     WebSocket: globalThis.WebSocket,
+    getUserMedia: (constraints) =>
+      navigator.mediaDevices.getUserMedia(constraints),
   }
 }
 
@@ -37,8 +44,14 @@ export class WebRtcP2PConnection implements P2PConnection {
   private dataChannel: RTCDataChannel | null = null
   private signaling: SignalingClient | null = null
   private remotePeerId = ''
+  private localStream: MediaStream | null = null
+  private localAudioTrack: MediaStreamTrack | null = null
+  private voicePermission: VoicePermissionState = 'pending'
+  private muted = false
   private readonly messageHandlers = new Set<MessageHandler>()
   private readonly stateHandlers = new Set<ConnectionStateHandler>()
+  private readonly remoteStreamHandlers = new Set<RemoteStreamHandler>()
+  private readonly voicePermissionHandlers = new Set<VoicePermissionHandler>()
   private readonly rtcGlobals: WebRtcGlobals
   private removeSignalingListener: (() => void) | null = null
 
@@ -64,6 +77,35 @@ export class WebRtcP2PConnection implements P2PConnection {
     }
   }
 
+  getVoicePermission(): VoicePermissionState {
+    return this.voicePermission
+  }
+
+  isMuted(): boolean {
+    return this.muted
+  }
+
+  setMuted(muted: boolean): void {
+    this.muted = muted
+    if (this.localAudioTrack) {
+      setTrackMuted(this.localAudioTrack, muted)
+    }
+  }
+
+  onRemoteStream(handler: RemoteStreamHandler): () => void {
+    this.remoteStreamHandlers.add(handler)
+    return () => {
+      this.remoteStreamHandlers.delete(handler)
+    }
+  }
+
+  onVoicePermissionChange(handler: VoicePermissionHandler): () => void {
+    this.voicePermissionHandlers.add(handler)
+    return () => {
+      this.voicePermissionHandlers.delete(handler)
+    }
+  }
+
   async connectAsHost(roomCode: string): Promise<void> {
     await this.startConnection('host', roomCode, roomCode)
   }
@@ -75,6 +117,8 @@ export class WebRtcP2PConnection implements P2PConnection {
     const pc = this.requirePeerConnection()
     const channel = pc.createDataChannel(DATA_CHANNEL_LABEL, { ordered: true })
     this.attachDataChannel(channel)
+
+    await this.setupLocalAudio(pc)
 
     const offer = await pc.createOffer()
     await pc.setLocalDescription(offer)
@@ -100,6 +144,7 @@ export class WebRtcP2PConnection implements P2PConnection {
     this.dataChannel?.close()
     this.pc?.close()
     this.signaling?.close()
+    this.stopLocalStream()
     this.dataChannel = null
     this.pc = null
     this.signaling = null
@@ -132,9 +177,65 @@ export class WebRtcP2PConnection implements P2PConnection {
     this.pc = pc
     this.setupPeerConnectionListeners(pc)
 
+    if (role === 'host') {
+      await this.setupLocalAudio(pc)
+    }
+
     this.removeSignalingListener = signaling.onMessage((message) => {
       void this.handleSignalingMessage(message, role)
     })
+  }
+
+  private async setupLocalAudio(pc: RTCPeerConnection): Promise<void> {
+    const getUserMedia = this.rtcGlobals.getUserMedia
+    if (!getUserMedia) {
+      this.setVoicePermission('denied')
+      return
+    }
+
+    try {
+      const stream = await getUserMedia({ audio: true })
+      const track = stream.getAudioTracks()[0] ?? null
+      this.localStream = stream
+      this.localAudioTrack = track
+
+      if (track) {
+        pc.addTrack(track, stream)
+        setTrackMuted(track, this.muted)
+      }
+
+      this.setVoicePermission('granted')
+    } catch {
+      this.setVoicePermission('denied')
+    }
+  }
+
+  private stopLocalStream(): void {
+    for (const track of this.localStream?.getTracks() ?? []) {
+      track.stop()
+    }
+
+    this.localStream = null
+    this.localAudioTrack = null
+    this.setVoicePermission('pending')
+  }
+
+  private setVoicePermission(nextState: VoicePermissionState): void {
+    if (this.voicePermission === nextState) {
+      return
+    }
+
+    this.voicePermission = nextState
+
+    for (const handler of this.voicePermissionHandlers) {
+      handler(nextState)
+    }
+  }
+
+  private notifyRemoteStream(stream: MediaStream): void {
+    for (const handler of this.remoteStreamHandlers) {
+      handler(stream)
+    }
   }
 
   private setupPeerConnectionListeners(pc: RTCPeerConnection): void {
@@ -172,6 +273,13 @@ export class WebRtcP2PConnection implements P2PConnection {
 
     pc.ondatachannel = (event) => {
       this.attachDataChannel(event.channel)
+    }
+
+    pc.ontrack = (event) => {
+      const stream = event.streams[0]
+      if (stream) {
+        this.notifyRemoteStream(stream)
+      }
     }
   }
 

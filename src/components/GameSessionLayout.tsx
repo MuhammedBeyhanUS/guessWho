@@ -1,8 +1,12 @@
 import CharacterBoard from './CharacterBoard'
 import Button from './Button'
 import ChatPanel from './ChatPanel'
+import CoinFlipOverlay from './CoinFlipOverlay'
+import VoiceControlBar from './VoiceControlBar'
 import type { ChatDisplayMessage } from '../domain/chat/types'
-import type { ConnectionState } from '../transport/types'
+import type { PlayerRole } from '../domain/game/types'
+import type { ConnectionState, VoicePermissionState } from '../transport/types'
+import type { RefObject } from 'react'
 import styles from './GameSessionLayout.module.css'
 
 export type GameSessionLayoutProps = {
@@ -18,6 +22,20 @@ export type GameSessionLayoutProps = {
   copyFeedback?: string | null
   chatMessages?: ChatDisplayMessage[]
   onSendChatMessage?: (text: string) => void
+  isMuted?: boolean
+  onToggleMute?: () => void
+  voicePermission?: VoicePermissionState
+  remoteAudioRef?: RefObject<HTMLAudioElement | null>
+  remoteStream?: MediaStream | null
+  statusText?: string
+  selectionMode?: boolean
+  boardKey?: string
+  onSelectMystery?: (characterId: string) => void
+  canSendReady?: boolean
+  onSendReady?: () => void
+  coinFlipVisible?: boolean
+  coinFlipResult?: PlayerRole | null
+  sessionError?: string | null
 }
 
 function GameSessionLayout({
@@ -33,10 +51,26 @@ function GameSessionLayout({
   copyFeedback,
   chatMessages = [],
   onSendChatMessage,
+  isMuted = false,
+  onToggleMute,
+  voicePermission = 'pending',
+  remoteAudioRef,
+  remoteStream = null,
+  statusText = 'Waiting for game setup…',
+  selectionMode = false,
+  boardKey = 'board',
+  onSelectMystery,
+  canSendReady = false,
+  onSendReady,
+  coinFlipVisible = false,
+  coinFlipResult = null,
+  sessionError = null,
 }: GameSessionLayoutProps) {
   const isConnected = connectionState === 'connected'
   const roleLabel = isHost ? 'Host' : 'Guest'
   const opponentRoleLabel = isHost ? 'Guest' : 'Host'
+  const overlayError = sessionError ?? errorMessage
+  const showConnectionOverlay = !isConnected || sessionError !== null
 
   return (
     <main className={styles.layout}>
@@ -57,7 +91,15 @@ function GameSessionLayout({
           className={styles.boardPanel}
           aria-label="Your character board"
         >
-          <CharacterBoard />
+          <CharacterBoard
+            key={boardKey}
+            selectionMode={selectionMode}
+            onSelectionChange={(characterId) => {
+              if (characterId !== null) {
+                onSelectMystery?.(characterId)
+              }
+            }}
+          />
         </section>
 
         <aside className={styles.sidePanel}>
@@ -82,35 +124,41 @@ function GameSessionLayout({
             />
           </section>
 
-          <section className={styles.voiceBar} aria-label="Voice controls">
-            <h2 className={styles.panelTitle}>Voice</h2>
-            <div className={styles.voiceControls}>
-              <button
-                type="button"
-                className={styles.voiceButton}
-                disabled
-                aria-label="Mute microphone"
-              >
-                Mute
-              </button>
-              <span className={styles.micStatus} role="status">
-                Mic off
-              </span>
-            </div>
-          </section>
+          <VoiceControlBar
+            connectionState={connectionState}
+            isMuted={isMuted}
+            permissionDenied={voicePermission === 'denied'}
+            micAvailable={voicePermission === 'granted'}
+            onToggleMute={onToggleMute ?? (() => {})}
+            remoteAudioRef={remoteAudioRef ?? { current: null }}
+            remoteStream={remoteStream}
+          />
         </aside>
       </div>
 
       <section className={styles.statusBar} aria-label="Game status">
-        <p className={styles.statusText}>Waiting for game setup…</p>
+        <p className={styles.statusText} role="status">
+          {statusText}
+        </p>
+        {isConnected && canSendReady && onSendReady ? (
+          <Button
+            variant="primary"
+            className={styles.readyButton}
+            onClick={onSendReady}
+          >
+            Ready
+          </Button>
+        ) : null}
       </section>
 
-      {!isConnected ? (
+      <CoinFlipOverlay visible={coinFlipVisible} result={coinFlipResult} />
+
+      {showConnectionOverlay ? (
         <ConnectionOverlay
           isHost={isHost}
           connectionState={connectionState}
           connectionLabel={connectionLabel}
-          errorMessage={errorMessage}
+          errorMessage={overlayError}
           onRetry={onRetry}
           shareUrl={shareUrl}
           onCopyShareLink={onCopyShareLink}

@@ -66,4 +66,77 @@ describe('GameSessionLayout', () => {
     fireEvent.click(screen.getByRole('button', { name: /retry connection/i }))
     expect(onRetry).toHaveBeenCalled()
   })
+
+  it('disables Ready button until mystery is selected', () => {
+    render(
+      <GameSessionLayout
+        {...defaultProps}
+        statusText="Choose your mystery person"
+        selectionMode
+        canSendReady={false}
+        onSendReady={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: /ready/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('enables Ready button after selection', () => {
+    const onSendReady = vi.fn()
+    render(
+      <GameSessionLayout
+        {...defaultProps}
+        statusText="Tap Ready when you have chosen"
+        selectionMode
+        canSendReady
+        onSendReady={onSendReady}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /ready/i }))
+    expect(onSendReady).toHaveBeenCalled()
+  })
+
+  it('shows coin flip overlay when visible', () => {
+    render(
+      <GameSessionLayout
+        {...defaultProps}
+        statusText="Flipping coin…"
+        coinFlipVisible
+        coinFlipResult="host"
+      />,
+    )
+
+    expect(screen.getByLabelText('Coin flip')).toBeInTheDocument()
+    expect(screen.getByText(/host goes first/i)).toBeInTheDocument()
+  })
+
+  it('shows turn status during playing phase', () => {
+    render(
+      <GameSessionLayout
+        {...defaultProps}
+        statusText="Your turn"
+        selectionMode={false}
+      />,
+    )
+
+    expect(screen.getByLabelText('Game status')).toHaveTextContent('Your turn')
+  })
+
+  it('shows setup disconnect error overlay', () => {
+    render(
+      <GameSessionLayout
+        {...defaultProps}
+        connectionState="disconnected"
+        connectionLabel="Disconnected"
+        sessionError="Opponent disconnected during game setup."
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Opponent disconnected during game setup.',
+    )
+  })
 })

@@ -27,6 +27,8 @@ export interface GameState {
   pendingQuestion: PendingQuestion | null
   winner: PlayerRole | null
   gameOverReason: GameOverReason | null
+  ready: Record<PlayerRole, boolean>
+  coinFlipResult: PlayerRole | null
 }
 
 export type GameError =
@@ -39,5 +41,9 @@ export type GameError =
   | 'unparseable-question'
   | 'mystery-not-selected'
   | 'not-all-ready'
+  | 'not-ready'
+  | 'already-ready'
+  | 'coin-flip-mismatch'
+  | 'coin-flip-pending'
   | 'empty-question'
   | 'game-finished'

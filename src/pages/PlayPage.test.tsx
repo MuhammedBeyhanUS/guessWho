@@ -47,6 +47,14 @@ function renderGuestPlayPage(roomCode = 'ABC234') {
   )
 }
 
+const voiceDefaults = {
+  isMuted: false,
+  toggleMute: vi.fn(),
+  voicePermission: 'granted' as const,
+  remoteAudioRef: { current: null },
+  remoteStream: null,
+}
+
 describe('PlayPage host create view', () => {
   afterEach(() => {
     vi.restoreAllMocks()
@@ -60,6 +68,7 @@ describe('PlayPage host create view', () => {
       retry: vi.fn(),
       send: vi.fn(),
       onMessage: vi.fn(() => () => {}),
+      ...voiceDefaults,
     })
 
     renderHostPlayPage('XYZ789')
@@ -82,6 +91,7 @@ describe('PlayPage host create view', () => {
       retry: vi.fn(),
       send: vi.fn(),
       onMessage: vi.fn(() => () => {}),
+      ...voiceDefaults,
     })
 
     const writeText = vi.fn().mockResolvedValue(undefined)
@@ -109,6 +119,7 @@ describe('PlayPage host create view', () => {
       retry: vi.fn(),
       send: vi.fn(),
       onMessage: vi.fn(() => () => {}),
+      ...voiceDefaults,
     })
 
     renderHostPlayPage()
@@ -128,6 +139,7 @@ describe('PlayPage host create view', () => {
       retry,
       send: vi.fn(),
       onMessage: vi.fn(() => () => {}),
+      ...voiceDefaults,
     })
 
     renderHostPlayPage()
@@ -152,6 +164,7 @@ describe('PlayPage guest join view', () => {
       retry: vi.fn(),
       send: vi.fn(),
       onMessage: vi.fn(() => () => {}),
+      ...voiceDefaults,
     })
 
     renderGuestPlayPage('XYZ789')

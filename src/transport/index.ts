@@ -18,4 +18,5 @@ export {
 } from './signalingClient'
 export { createRtcConfiguration, getIceServers } from './iceConfig'
 export { createP2PConnection, WebRtcP2PConnection } from './webrtcConnection'
+export { isTrackMuted, setTrackMuted } from './voice'
 export { getConnectionStatusLabel, useP2PConnection } from './useP2PConnection'

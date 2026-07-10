@@ -4,14 +4,21 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import JoinPage from './JoinPage'
 import PlayPage from './PlayPage'
 
+const mockP2PConnection = {
+  connectionState: 'connecting' as const,
+  errorMessage: null,
+  retry: vi.fn(),
+  send: vi.fn(),
+  onMessage: vi.fn(() => () => {}),
+  isMuted: false,
+  toggleMute: vi.fn(),
+  voicePermission: 'granted' as const,
+  remoteAudioRef: { current: null },
+  remoteStream: null,
+}
+
 vi.mock('../transport/useP2PConnection', () => ({
-  useP2PConnection: () => ({
-    connectionState: 'connecting',
-    errorMessage: null,
-    retry: vi.fn(),
-    send: vi.fn(),
-    onMessage: vi.fn(() => () => {}),
-  }),
+  useP2PConnection: () => mockP2PConnection,
   getConnectionStatusLabel: (state: string) => {
     switch (state) {
       case 'connecting':

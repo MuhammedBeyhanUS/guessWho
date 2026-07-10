@@ -5,6 +5,9 @@ export type ConnectionState =
 
 export type ConnectionStateHandler = (state: ConnectionState) => void
 export type MessageHandler = (message: P2PMessage) => void
+export type VoicePermissionState = 'pending' | 'granted' | 'denied'
+export type VoicePermissionHandler = (state: VoicePermissionState) => void
+export type RemoteStreamHandler = (stream: MediaStream) => void
 
 export interface P2PConnection {
   connectAsHost(roomCode: string): Promise<void>
@@ -14,4 +17,9 @@ export interface P2PConnection {
   onConnectionStateChange(handler: ConnectionStateHandler): () => void
   getConnectionState(): ConnectionState
   close(): void
+  getVoicePermission(): VoicePermissionState
+  isMuted(): boolean
+  setMuted(muted: boolean): void
+  onRemoteStream(handler: RemoteStreamHandler): () => void
+  onVoicePermissionChange(handler: VoicePermissionHandler): () => void
 }

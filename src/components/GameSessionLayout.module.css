@@ -141,6 +141,10 @@
   background: #ffffff;
   border-radius: 0.75rem;
   box-shadow: 0 4px 16px rgba(26, 26, 46, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .statusText {
@@ -148,6 +152,16 @@
   font-size: 0.9375rem;
   font-weight: 600;
   color: #3b5bdb;
+}
+
+.readyButton {
+  min-width: 8rem;
+}
+
+.readyHint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #7a7a9a;
 }
 
 .overlay {

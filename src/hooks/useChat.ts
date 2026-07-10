@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   appendChatMessage,
   canSendChatText,
@@ -17,6 +17,11 @@ type UseChatOptions = {
 
 export function useChat({ send, onMessage, connectionState }: UseChatOptions) {
   const [messages, setMessages] = useState<ChatDisplayMessage[]>([])
+  const onMessageRef = useRef(onMessage)
+
+  useEffect(() => {
+    onMessageRef.current = onMessage
+  }, [onMessage])
 
   useEffect(() => {
     if (connectionState !== 'connected') {
@@ -24,7 +29,7 @@ export function useChat({ send, onMessage, connectionState }: UseChatOptions) {
       return
     }
 
-    const unsubscribe = onMessage((message) => {
+    const unsubscribe = onMessageRef.current((message) => {
       if (message.type !== 'chat') {
         return
       }
@@ -38,7 +43,7 @@ export function useChat({ send, onMessage, connectionState }: UseChatOptions) {
     })
 
     return unsubscribe
-  }, [onMessage, connectionState])
+  }, [connectionState])
 
   const sendMessage = useCallback(
     (text: string) => {

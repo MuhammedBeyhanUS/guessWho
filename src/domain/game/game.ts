@@ -39,6 +39,8 @@ export function createGame(): GameState {
     pendingQuestion: null,
     winner: null,
     gameOverReason: null,
+    ready: { host: false, guest: false },
+    coinFlipResult: null,
   }
 }
 
@@ -72,6 +74,118 @@ function bothMysteriesSelected(state: GameState): boolean {
     state.players.host.mysteryCharacterId !== null &&
     state.players.guest.mysteryCharacterId !== null
   )
+}
+
+export function bothPlayersReady(state: GameState): boolean {
+  return state.ready.host && state.ready.guest
+}
+
+export function markPlayerReady(
+  state: GameState,
+  role: PlayerRole,
+): Result<GameState, GameError> {
+  if (state.phase !== 'setup') {
+    return err('wrong-phase')
+  }
+
+  if (state.ready[role]) {
+    return err('already-ready')
+  }
+
+  if (state.players[role].mysteryCharacterId === null) {
+    return err('mystery-not-selected')
+  }
+
+  return ok({
+    ...state,
+    ready: {
+      ...state.ready,
+      [role]: true,
+    },
+  })
+}
+
+export function applyRemoteReady(
+  state: GameState,
+  role: PlayerRole,
+): Result<GameState, GameError> {
+  if (state.phase !== 'setup') {
+    return err('wrong-phase')
+  }
+
+  if (state.ready[role]) {
+    return ok(state)
+  }
+
+  return ok({
+    ...state,
+    ready: {
+      ...state.ready,
+      [role]: true,
+    },
+  })
+}
+
+export function applyCoinFlip(
+  state: GameState,
+  result: PlayerRole,
+): Result<GameState, GameError> {
+  if (state.phase !== 'setup') {
+    return err('wrong-phase')
+  }
+
+  if (!bothPlayersReady(state)) {
+    return err('not-ready')
+  }
+
+  return ok({
+    ...state,
+    coinFlipResult: result,
+  })
+}
+
+function resetBoardFlips(players: GameState['players']): GameState['players'] {
+  return {
+    host: {
+      ...players.host,
+      boardFlips: createEmptyBoardFlips(),
+    },
+    guest: {
+      ...players.guest,
+      boardFlips: createEmptyBoardFlips(),
+    },
+  }
+}
+
+export function beginPlaying(
+  state: GameState,
+  firstPlayer: PlayerRole,
+): Result<GameState, GameError> {
+  if (state.phase !== 'setup') {
+    return err('wrong-phase')
+  }
+
+  if (!bothPlayersReady(state)) {
+    return err('not-ready')
+  }
+
+  if (state.coinFlipResult === null) {
+    return err('coin-flip-pending')
+  }
+
+  if (state.coinFlipResult !== firstPlayer) {
+    return err('coin-flip-mismatch')
+  }
+
+  return ok({
+    ...state,
+    phase: 'playing',
+    currentPlayer: firstPlayer,
+    pendingQuestion: null,
+    winner: null,
+    gameOverReason: null,
+    players: resetBoardFlips(state.players),
+  })
 }
 
 export function startGame(

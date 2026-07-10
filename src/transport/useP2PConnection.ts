@@ -1,6 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { createP2PConnection } from './webrtcConnection'
-import type { ConnectionState, P2PConnection } from './types'
+import type {
+  ConnectionState,
+  P2PConnection,
+  VoicePermissionState,
+} from './types'
 import type { P2PMessage } from './protocol'
 
 type UseP2PConnectionOptions = {
@@ -15,6 +19,11 @@ type UseP2PConnectionResult = {
   retry: () => void
   send: (message: P2PMessage) => void
   onMessage: (handler: (message: P2PMessage) => void) => () => void
+  isMuted: boolean
+  toggleMute: () => void
+  voicePermission: VoicePermissionState
+  remoteAudioRef: RefObject<HTMLAudioElement | null>
+  remoteStream: MediaStream | null
 }
 
 export function useP2PConnection({
@@ -26,7 +35,12 @@ export function useP2PConnection({
     useState<ConnectionState>('disconnected')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [isMuted, setIsMuted] = useState(false)
+  const [voicePermission, setVoicePermission] =
+    useState<VoicePermissionState>('pending')
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const connectionRef = useRef<P2PConnection | null>(null)
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     if (!roomCode) {
@@ -35,12 +49,25 @@ export function useP2PConnection({
 
     const connection = connectionFactory()
     connectionRef.current = connection
+    setIsMuted(connection.isMuted())
+    setVoicePermission(connection.getVoicePermission())
+    setRemoteStream(null)
 
     const removeStateListener = connection.onConnectionStateChange((state) => {
       setConnectionState(state)
       if (state === 'connected') {
         setErrorMessage(null)
       }
+    })
+
+    const removeVoicePermissionListener = connection.onVoicePermissionChange(
+      (state) => {
+        setVoicePermission(state)
+      },
+    )
+
+    const removeRemoteStreamListener = connection.onRemoteStream((stream) => {
+      setRemoteStream(stream)
     })
 
     void (async () => {
@@ -53,6 +80,9 @@ export function useP2PConnection({
         } else {
           await connection.connectAsGuest(roomCode)
         }
+
+        setIsMuted(connection.isMuted())
+        setVoicePermission(connection.getVoicePermission())
       } catch (error) {
         setConnectionState('failed')
         setErrorMessage(getConnectionErrorMessage(error))
@@ -61,28 +91,53 @@ export function useP2PConnection({
 
     return () => {
       removeStateListener()
+      removeVoicePermissionListener()
+      removeRemoteStreamListener()
       connection.close()
       connectionRef.current = null
+      setRemoteStream(null)
     }
   }, [roomCode, isHost, attempt, connectionFactory])
+
+  const retry = useCallback(() => {
+    setAttempt((current) => current + 1)
+  }, [])
+
+  const send = useCallback((message: P2PMessage) => {
+    connectionRef.current?.send(message)
+  }, [])
+
+  const onMessage = useCallback((handler: (message: P2PMessage) => void) => {
+    const connection = connectionRef.current
+    if (!connection) {
+      return () => {}
+    }
+
+    return connection.onMessage(handler)
+  }, [])
+
+  const toggleMute = useCallback(() => {
+    const connection = connectionRef.current
+    if (!connection) {
+      return
+    }
+
+    const nextMuted = !connection.isMuted()
+    connection.setMuted(nextMuted)
+    setIsMuted(nextMuted)
+  }, [])
 
   return {
     connectionState,
     errorMessage,
-    retry: () => {
-      setAttempt((current) => current + 1)
-    },
-    send: (message) => {
-      connectionRef.current?.send(message)
-    },
-    onMessage: (handler) => {
-      const connection = connectionRef.current
-      if (!connection) {
-        return () => {}
-      }
-
-      return connection.onMessage(handler)
-    },
+    retry,
+    send,
+    onMessage,
+    isMuted,
+    toggleMute,
+    voicePermission,
+    remoteAudioRef,
+    remoteStream,
   }
 }
 

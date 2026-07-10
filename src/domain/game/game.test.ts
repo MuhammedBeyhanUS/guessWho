@@ -1,10 +1,14 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import {
+  applyCoinFlip,
+  applyRemoteReady,
   askQuestion,
   answerQuestion,
+  beginPlaying,
   createGame,
   flipBoardTile,
   guess,
+  markPlayerReady,
   resetQuestionIdCounter,
   selectMystery,
   startGame,
@@ -47,6 +51,8 @@ describe('createGame', () => {
     expect(state.currentPlayer).toBeNull()
     expect(state.pendingQuestion).toBeNull()
     expect(state.players.host.boardFlips.eleni).toBe('open')
+    expect(state.ready).toEqual({ host: false, guest: false })
+    expect(state.coinFlipResult).toBeNull()
   })
 })
 
@@ -195,6 +201,64 @@ describe('flipBoardTile', () => {
     for (const characterId of suggestions) {
       expect(state.players.host.boardFlips[characterId]).toBe('open')
     }
+  })
+})
+
+describe('setup sync', () => {
+  beforeEach(() => {
+    resetQuestionIdCounter()
+  })
+
+  it('cannot mark ready without mystery selected', () => {
+    expectError(markPlayerReady(createGame(), 'host'), 'mystery-not-selected')
+  })
+
+  it('marks a player ready after mystery selection', () => {
+    let state = createGame()
+    state = unwrap(selectMystery(state, 'host', 'eleni'))
+    state = unwrap(markPlayerReady(state, 'host'))
+    expect(state.ready.host).toBe(true)
+  })
+
+  it('applies remote ready without requiring opponent mystery', () => {
+    let state = createGame()
+    state = unwrap(applyRemoteReady(state, 'guest'))
+    expect(state.ready.guest).toBe(true)
+    expect(state.players.guest.mysteryCharacterId).toBeNull()
+  })
+
+  it('requires both ready and coin flip before playing', () => {
+    let state = createGame()
+    state = unwrap(selectMystery(state, 'host', 'eleni'))
+    state = unwrap(markPlayerReady(state, 'host'))
+    state = unwrap(applyRemoteReady(state, 'guest'))
+    expectError(beginPlaying(state, 'host'), 'coin-flip-pending')
+
+    state = unwrap(applyCoinFlip(state, 'host'))
+    state = unwrap(beginPlaying(state, 'host'))
+    expect(state.phase).toBe('playing')
+    expect(state.currentPlayer).toBe('host')
+  })
+
+  it('rejects game-start when firstPlayer does not match coin flip', () => {
+    let state = createGame()
+    state = unwrap(selectMystery(state, 'host', 'eleni'))
+    state = unwrap(markPlayerReady(state, 'host'))
+    state = unwrap(applyRemoteReady(state, 'guest'))
+    state = unwrap(applyCoinFlip(state, 'guest'))
+    expectError(beginPlaying(state, 'host'), 'coin-flip-mismatch')
+  })
+
+  it('resets board flips to open when playing begins', () => {
+    let state = createGame()
+    state = unwrap(selectMystery(state, 'host', 'eleni'))
+    state = unwrap(flipBoardTile(state, 'host', 'marco'))
+    state = unwrap(markPlayerReady(state, 'host'))
+    state = unwrap(applyRemoteReady(state, 'guest'))
+    state = unwrap(applyCoinFlip(state, 'host'))
+    state = unwrap(beginPlaying(state, 'host'))
+
+    expect(state.players.host.boardFlips.marco).toBe('open')
   })
 })
 

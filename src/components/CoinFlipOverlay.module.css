@@ -1,0 +1,67 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(26, 26, 46, 0.65);
+  z-index: 20;
+}
+
+.card {
+  width: 100%;
+  max-width: 20rem;
+  padding: 2rem;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 12px 40px rgba(26, 26, 46, 0.25);
+}
+
+.title {
+  margin: 0 0 1.25rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.coin {
+  width: 6rem;
+  height: 6rem;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ffd43b, #fab005);
+  box-shadow: 0 6px 20px rgba(250, 176, 5, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: coinSpin 1.2s ease-in-out infinite;
+}
+
+.coinFace {
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5c4a00;
+}
+
+.result {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3b5bdb;
+}
+
+@keyframes coinSpin {
+  0% {
+    transform: rotateY(0deg) scale(1);
+  }
+  50% {
+    transform: rotateY(180deg) scale(1.05);
+  }
+  100% {
+    transform: rotateY(360deg) scale(1);
+  }
+}

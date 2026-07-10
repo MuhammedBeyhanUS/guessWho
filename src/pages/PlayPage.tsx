@@ -3,6 +3,7 @@ import { useLocation, useParams } from 'react-router-dom'
 import GameSessionLayout from '../components/GameSessionLayout'
 import { getShareableUrl } from '../domain/roomCode'
 import { useChat } from '../hooks/useChat'
+import { useGameSession } from '../hooks/useGameSession'
 import {
   getConnectionStatusLabel,
   useP2PConnection,
@@ -18,19 +19,46 @@ function PlayPage() {
   const locationState = location.state as PlayLocationState | null
   const isHost = locationState?.isHost === true
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
-  const { connectionState, errorMessage, retry, send, onMessage } =
-    useP2PConnection({
-      roomCode,
-      isHost,
-    })
+  const {
+    connectionState,
+    errorMessage,
+    retry,
+    send,
+    onMessage,
+    isMuted,
+    toggleMute,
+    voicePermission,
+    remoteAudioRef,
+    remoteStream,
+  } = useP2PConnection({
+    roomCode,
+    isHost,
+  })
   const { messages: chatMessages, sendMessage } = useChat({
     send,
     onMessage,
     connectionState,
   })
+  const {
+    statusText,
+    selectionMode,
+    boardKey,
+    selectMysteryCharacter,
+    canSendReady,
+    sendReady,
+    coinFlipVisible,
+    coinFlipResult,
+    sessionError,
+  } = useGameSession({
+    isHost,
+    connectionState,
+    send,
+    onMessage,
+  })
 
   const shareUrl = roomCode ? getShareableUrl(roomCode) : ''
   const connectionLabel = getConnectionStatusLabel(connectionState)
+  const displayError = sessionError ?? errorMessage
 
   async function copyShareLink() {
     if (!shareUrl) {
@@ -64,7 +92,7 @@ function PlayPage() {
       isHost={isHost}
       connectionState={connectionState}
       connectionLabel={connectionLabel}
-      errorMessage={errorMessage}
+      errorMessage={displayError}
       onRetry={retry}
       roomCode={roomCode}
       shareUrl={shareUrl}
@@ -73,6 +101,20 @@ function PlayPage() {
       copyFeedback={copyFeedback}
       chatMessages={chatMessages}
       onSendChatMessage={sendMessage}
+      isMuted={isMuted}
+      onToggleMute={toggleMute}
+      voicePermission={voicePermission}
+      remoteAudioRef={remoteAudioRef}
+      remoteStream={remoteStream}
+      statusText={statusText}
+      selectionMode={selectionMode}
+      boardKey={boardKey}
+      onSelectMystery={selectMysteryCharacter}
+      canSendReady={canSendReady}
+      onSendReady={sendReady}
+      coinFlipVisible={coinFlipVisible}
+      coinFlipResult={coinFlipResult}
+      sessionError={sessionError}
     />
   )
 }

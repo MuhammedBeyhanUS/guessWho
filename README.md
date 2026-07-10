@@ -40,3 +40,11 @@ Open [http://localhost:5173](http://localhost:5173), create a game, and join fro
 2. Tab A: create a game and copy the room link.
 3. Tab B: open the link (guest auto-connects).
 4. Confirm both tabs show **Connected** on the play page.
+
+### Manual voice test
+
+1. Follow the WebRTC steps above and allow microphone access in both tabs when prompted.
+2. Confirm each tab shows **Mic on** and **Voice linked** in the voice control bar.
+3. Speak in one tab and confirm audio is heard in the other.
+4. Click **Mute** in one tab and confirm the opponent no longer hears you; **Unmute** restores audio.
+5. Deny microphone in one tab (or block it in browser settings) and confirm the permission banner appears while text chat and the game still work.
