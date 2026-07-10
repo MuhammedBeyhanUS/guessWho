@@ -48,3 +48,18 @@ Open [http://localhost:5173](http://localhost:5173), create a game, and join fro
 3. Speak in one tab and confirm audio is heard in the other.
 4. Click **Mute** in one tab and confirm the opponent no longer hears you; **Unmute** restores audio.
 5. Deny microphone in one tab (or block it in browser settings) and confirm the permission banner appears while text chat and the game still work.
+
+## Gameplay
+
+After setup (mystery selection, ready, coin flip), players take turns asking yes/no questions or making a guess:
+
+- **Your turn:** type a question and click **Ask**, or click **Guess** to pick a character on your board and confirm.
+- **Opponent asked:** answer with **Yes** or **No** (validated against your mystery person).
+- **Board:** flip tiles manually to eliminate characters — the app never auto-flips.
+- **Win/lose:** correct guess wins; wrong guess ends the game immediately. **Play Again** returns home.
+
+## Issues
+
+| Issue | Status |
+|---|---|
+| 011 — Turn-based gameplay sync | Done |

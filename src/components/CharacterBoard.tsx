@@ -4,16 +4,21 @@ import {
   boardReducer,
   createInitialBoardState,
   isCharacterSelected,
-  isTileClosed,
   type BoardState,
+  type TileState,
 } from '../domain/boardState'
 import { cardBackUrl, getCharacterPortraitUrl } from '../assets/characters'
 import styles from './CharacterBoard.module.css'
 
 export interface CharacterBoardProps {
   selectionMode?: boolean
+  guessMode?: boolean
   initialState?: BoardState
+  tiles?: Record<string, TileState>
+  selectedGuessId?: string | null
   onSelectionChange?: (characterId: string | null) => void
+  onGuessSelect?: (characterId: string) => void
+  onTileToggle?: (characterId: string) => void
 }
 
 const defaultInitialState = createInitialBoardState(
@@ -22,13 +27,24 @@ const defaultInitialState = createInitialBoardState(
 
 function CharacterBoard({
   selectionMode = false,
+  guessMode = false,
   initialState = defaultInitialState,
+  tiles,
+  selectedGuessId = null,
   onSelectionChange,
+  onGuessSelect,
+  onTileToggle,
 }: CharacterBoardProps) {
   const [state, dispatch] = useReducer(boardReducer, initialState)
+  const controlledTiles = tiles ?? state.tiles
   const selectionLocked = selectionMode && state.selectedId !== null
 
   function handleTileClick(characterId: string) {
+    if (guessMode) {
+      onGuessSelect?.(characterId)
+      return
+    }
+
     if (selectionMode) {
       if (selectionLocked && state.selectedId !== characterId) {
         return
@@ -40,6 +56,11 @@ function CharacterBoard({
 
       dispatch({ type: 'select', characterId })
       onSelectionChange?.(characterId)
+      return
+    }
+
+    if (onTileToggle) {
+      onTileToggle(characterId)
       return
     }
 
@@ -55,11 +76,22 @@ function CharacterBoard({
             : 'Tap a character to choose your mystery person'}
         </p>
       )}
+      {guessMode && (
+        <p className={styles.selectionHint}>
+          {selectedGuessId
+            ? `Guessing: ${CHARACTERS.find((c) => c.id === selectedGuessId)?.name ?? 'Selected'}`
+            : 'Tap a character to make your guess'}
+        </p>
+      )}
       <div className={styles.grid}>
         {CHARACTERS.map((character) => {
-          const closed = isTileClosed(state, character.id)
-          const selected = isCharacterSelected(state, character.id)
-          const disabled = selectionMode && selectionLocked && !selected
+          const closed = controlledTiles[character.id] === 'closed'
+          const selected =
+            selectionMode && isCharacterSelected(state, character.id)
+          const guessed = guessMode && selectedGuessId === character.id
+          const disabled =
+            (selectionMode && selectionLocked && !selected) ||
+            (guessMode && closed)
 
           return (
             <button
@@ -68,13 +100,15 @@ function CharacterBoard({
               className={[
                 styles.tile,
                 closed ? styles.flipped : '',
-                selected ? styles.tileSelected : '',
+                selected || guessed ? styles.tileSelected : '',
                 disabled ? styles.tileDisabled : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
-              aria-label={`${character.name}${closed ? ', eliminated' : ''}${selected ? ', selected as mystery person' : ''}`}
-              aria-pressed={selectionMode ? selected : closed}
+              aria-label={`${character.name}${closed ? ', eliminated' : ''}${selected ? ', selected as mystery person' : ''}${guessed ? ', selected for guess' : ''}`}
+              aria-pressed={
+                selectionMode ? selected : guessMode ? guessed : closed
+              }
               disabled={disabled}
               onClick={() => handleTileClick(character.id)}
             >

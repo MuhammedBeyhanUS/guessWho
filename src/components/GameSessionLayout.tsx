@@ -2,9 +2,12 @@ import CharacterBoard from './CharacterBoard'
 import Button from './Button'
 import ChatPanel from './ChatPanel'
 import CoinFlipOverlay from './CoinFlipOverlay'
+import GameOverOverlay from './GameOverOverlay'
+import GameplayControls from './GameplayControls'
 import VoiceControlBar from './VoiceControlBar'
 import type { ChatDisplayMessage } from '../domain/chat/types'
-import type { PlayerRole } from '../domain/game/types'
+import type { PlayerRole, YesNo } from '../domain/game/types'
+import type { TileState } from '../domain/boardState'
 import type { ConnectionState, VoicePermissionState } from '../transport/types'
 import type { RefObject } from 'react'
 import styles from './GameSessionLayout.module.css'
@@ -36,6 +39,25 @@ export type GameSessionLayoutProps = {
   coinFlipVisible?: boolean
   coinFlipResult?: PlayerRole | null
   sessionError?: string | null
+  playingPhase?: boolean
+  boardTiles?: Record<string, TileState>
+  guessMode?: boolean
+  selectedGuessId?: string | null
+  onTileFlip?: (characterId: string) => void
+  onGuessSelect?: (characterId: string) => void
+  canAsk?: boolean
+  canAnswer?: boolean
+  canGuess?: boolean
+  gameplayMode?: 'idle' | 'guess'
+  pendingQuestionText?: string | null
+  onSubmitQuestion?: (text: string) => void
+  onSubmitAnswer?: (value: YesNo) => void
+  onEnterGuessMode?: () => void
+  onExitGuessMode?: () => void
+  onConfirmGuess?: () => void
+  gameOverVisible?: boolean
+  winnerLabel?: string | null
+  onPlayAgain?: () => void
 }
 
 function GameSessionLayout({
@@ -65,6 +87,25 @@ function GameSessionLayout({
   coinFlipVisible = false,
   coinFlipResult = null,
   sessionError = null,
+  playingPhase = false,
+  boardTiles,
+  guessMode = false,
+  selectedGuessId = null,
+  onTileFlip,
+  onGuessSelect,
+  canAsk = false,
+  canAnswer = false,
+  canGuess = false,
+  gameplayMode = 'idle',
+  pendingQuestionText = null,
+  onSubmitQuestion,
+  onSubmitAnswer,
+  onEnterGuessMode,
+  onExitGuessMode,
+  onConfirmGuess,
+  gameOverVisible = false,
+  winnerLabel = null,
+  onPlayAgain,
 }: GameSessionLayoutProps) {
   const isConnected = connectionState === 'connected'
   const roleLabel = isHost ? 'Host' : 'Guest'
@@ -94,11 +135,16 @@ function GameSessionLayout({
           <CharacterBoard
             key={boardKey}
             selectionMode={selectionMode}
+            guessMode={guessMode}
+            tiles={playingPhase ? boardTiles : undefined}
+            selectedGuessId={selectedGuessId}
             onSelectionChange={(characterId) => {
               if (characterId !== null) {
                 onSelectMystery?.(characterId)
               }
             }}
+            onTileToggle={playingPhase ? onTileFlip : undefined}
+            onGuessSelect={guessMode ? onGuessSelect : undefined}
           />
         </section>
 
@@ -133,6 +179,22 @@ function GameSessionLayout({
             remoteAudioRef={remoteAudioRef ?? { current: null }}
             remoteStream={remoteStream}
           />
+
+          {playingPhase ? (
+            <GameplayControls
+              canAsk={canAsk}
+              canAnswer={canAnswer}
+              canGuess={canGuess}
+              gameplayMode={gameplayMode}
+              pendingQuestionText={pendingQuestionText}
+              selectedGuessId={selectedGuessId}
+              onSubmitQuestion={onSubmitQuestion ?? (() => {})}
+              onSubmitAnswer={onSubmitAnswer ?? (() => {})}
+              onEnterGuessMode={onEnterGuessMode ?? (() => {})}
+              onExitGuessMode={onExitGuessMode ?? (() => {})}
+              onConfirmGuess={onConfirmGuess ?? (() => {})}
+            />
+          ) : null}
         </aside>
       </div>
 
@@ -152,6 +214,12 @@ function GameSessionLayout({
       </section>
 
       <CoinFlipOverlay visible={coinFlipVisible} result={coinFlipResult} />
+
+      <GameOverOverlay
+        visible={gameOverVisible}
+        winnerLabel={winnerLabel}
+        onPlayAgain={onPlayAgain ?? (() => {})}
+      />
 
       {showConnectionOverlay ? (
         <ConnectionOverlay

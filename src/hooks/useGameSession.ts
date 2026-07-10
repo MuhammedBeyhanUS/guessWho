@@ -9,6 +9,11 @@ import {
   type GameState,
   type PlayerRole,
 } from '../domain/game'
+import {
+  handleGameplayMessage,
+  useGameplay,
+  type GameplayView,
+} from './useGameplay'
 import type { P2PMessage } from '../transport/protocol'
 import type { ConnectionState } from '../transport/types'
 
@@ -38,7 +43,7 @@ export type GameSessionView = {
   sessionError: string | null
   selectMysteryCharacter: (characterId: string) => void
   sendReady: () => void
-}
+} & GameplayView
 
 function opponentRole(role: PlayerRole): PlayerRole {
   return role === 'host' ? 'guest' : 'host'
@@ -54,6 +59,13 @@ export function getGameStatusText(
   coinFlipVisible: boolean,
 ): string {
   if (gameState.phase === 'playing') {
+    if (gameState.pendingQuestion !== null) {
+      if (gameState.pendingQuestion.askedBy === localRole) {
+        return 'Waiting for answer…'
+      }
+      return 'Answer the question'
+    }
+
     const turnLabel =
       gameState.currentPlayer === localRole ? 'Your' : "Opponent's"
     return `${turnLabel} turn`
@@ -166,7 +178,12 @@ export function useGameSession({
           setBoardKey(`playing-${message.firstPlayer}`)
           return result.value
         })
+        return
       }
+
+      setGameState((current) =>
+        handleGameplayMessage(message, localRole, current, sendRef.current),
+      )
     })
 
     return unsubscribe
@@ -272,6 +289,13 @@ export function useGameSession({
 
   const opponent = opponentRole(localRole)
 
+  const gameplay = useGameplay({
+    gameState,
+    localRole,
+    setGameState,
+    send,
+  })
+
   return {
     gameState,
     localRole,
@@ -291,5 +315,6 @@ export function useGameSession({
     sessionError,
     selectMysteryCharacter,
     sendReady,
+    ...gameplay,
   }
 }

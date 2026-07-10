@@ -206,6 +206,59 @@ describe('useGameSession', () => {
       'Opponent disconnected during game setup.',
     )
   })
+
+  it('syncs question-answer flow over P2P between host and guest', async () => {
+    const transport = createMockTransport()
+    const randomCoinFlip = vi.fn(() => 'host' as const)
+
+    const { result: hostResult } = renderHook(() =>
+      useGameSession({
+        isHost: true,
+        connectionState: 'connected',
+        send: transport.hostSend,
+        onMessage: transport.hostOnMessage,
+        coinFlipDelayMs: 50,
+        randomCoinFlip,
+      }),
+    )
+
+    const { result: guestResult } = renderHook(() =>
+      useGameSession({
+        isHost: false,
+        connectionState: 'connected',
+        send: transport.guestSend,
+        onMessage: transport.guestOnMessage,
+        coinFlipDelayMs: 50,
+        randomCoinFlip,
+      }),
+    )
+
+    act(() => {
+      hostResult.current.selectMysteryCharacter('eleni')
+      hostResult.current.sendReady()
+      guestResult.current.selectMysteryCharacter('marco')
+      guestResult.current.sendReady()
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(50)
+    })
+
+    act(() => {
+      hostResult.current.submitQuestion('Does your person wear glasses?')
+    })
+
+    expect(guestResult.current.canAnswer).toBe(true)
+    expect(hostResult.current.canAnswer).toBe(false)
+
+    act(() => {
+      guestResult.current.submitAnswer('yes')
+    })
+
+    expect(hostResult.current.gameState.currentPlayer).toBe('guest')
+    expect(guestResult.current.gameState.currentPlayer).toBe('guest')
+    expect(hostResult.current.gameState.pendingQuestion).toBeNull()
+  })
 })
 
 describe('setup sync reducers', () => {

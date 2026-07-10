@@ -4,6 +4,11 @@ import {
   applyRemoteReady,
   askQuestion,
   answerQuestion,
+  applyRemoteQuestion,
+  applyRemoteAnswer,
+  validateGuessRequest,
+  resolveGuess,
+  applyGameOver,
   beginPlaying,
   createGame,
   flipBoardTile,
@@ -259,6 +264,84 @@ describe('setup sync', () => {
     state = unwrap(beginPlaying(state, 'host'))
 
     expect(state.players.host.boardFlips.marco).toBe('open')
+  })
+})
+
+describe('P2P gameplay sync', () => {
+  beforeEach(() => {
+    resetQuestionIdCounter()
+  })
+
+  it('runs full question-answer-guess sequence to correct winner', () => {
+    let hostState = setupPlayingGame('host')
+    let guestState = setupPlayingGame('host')
+
+    hostState = unwrap(
+      askQuestion(hostState, 'host', 'Does your person wear glasses?'),
+    )
+    const questionId = hostState.pendingQuestion!.id
+    guestState = unwrap(
+      applyRemoteQuestion(
+        guestState,
+        questionId,
+        'Does your person wear glasses?',
+        'host',
+      ),
+    )
+
+    guestState = unwrap(answerQuestion(guestState, 'guest', 'yes'))
+    hostState = unwrap(applyRemoteAnswer(hostState, questionId, 'guest'))
+
+    expect(hostState.currentPlayer).toBe('guest')
+    expect(guestState.currentPlayer).toBe('guest')
+    expect(hostState.pendingQuestion).toBeNull()
+    expect(guestState.pendingQuestion).toBeNull()
+
+    guestState = unwrap(validateGuessRequest(guestState, 'guest', 'eleni'))
+    hostState = unwrap(resolveGuess(hostState, 'guest', 'eleni'))
+
+    expect(hostState.phase).toBe('finished')
+    expect(hostState.winner).toBe('guest')
+    expect(hostState.gameOverReason).toBe('correct-guess')
+
+    guestState = unwrap(applyGameOver(guestState, 'guest', 'correct-guess'))
+    expect(guestState.winner).toBe('guest')
+  })
+
+  it('ends game when guess targets wrong character', () => {
+    let hostState = setupPlayingGame('host')
+    hostState = unwrap(resolveGuess(hostState, 'host', 'eleni'))
+
+    expect(hostState.phase).toBe('finished')
+    expect(hostState.winner).toBe('guest')
+    expect(hostState.gameOverReason).toBe('wrong-guess')
+  })
+
+  it('does not mutate board when receiving remote answer', () => {
+    let state = setupPlayingGame('host')
+    state = unwrap(askQuestion(state, 'host', 'Does your person wear glasses?'))
+    const questionId = state.pendingQuestion!.id
+
+    state = unwrap(applyRemoteAnswer(state, questionId, 'guest'))
+
+    const suggestions = suggestEliminations(
+      'Does your person wear glasses?',
+      'yes',
+    )
+    for (const characterId of suggestions) {
+      expect(state.players.host.boardFlips[characterId]).toBe('open')
+    }
+  })
+
+  it('ignores out-of-turn remote question', () => {
+    const state = setupPlayingGame('host')
+    const result = applyRemoteQuestion(
+      state,
+      'q-1',
+      'Does your person wear glasses?',
+      'guest',
+    )
+    expectError(result, 'not-your-turn')
   })
 })
 

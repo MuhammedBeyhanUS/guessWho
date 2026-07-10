@@ -4,6 +4,7 @@ import { deriveAnswer } from './questions'
 import { err, ok, type Result } from './result'
 import type {
   GameError,
+  GameOverReason,
   GameState,
   PendingQuestion,
   PlayerRole,
@@ -244,6 +245,7 @@ export function askQuestion(
   state: GameState,
   role: PlayerRole,
   text: string,
+  questionId?: string,
 ): Result<GameState, GameError> {
   const actorError = assertPlayingActor(state, role)
   if (actorError !== null) {
@@ -256,7 +258,7 @@ export function askQuestion(
   }
 
   const pendingQuestion: PendingQuestion = {
-    id: nextQuestionId(),
+    id: questionId ?? nextQuestionId(),
     text: trimmed,
     askedBy: role,
   }
@@ -264,6 +266,43 @@ export function askQuestion(
   return ok({
     ...state,
     pendingQuestion,
+  })
+}
+
+export function applyRemoteQuestion(
+  state: GameState,
+  questionId: string,
+  text: string,
+  askedBy: PlayerRole,
+): Result<GameState, GameError> {
+  if (state.phase === 'finished') {
+    return err('game-finished')
+  }
+
+  if (state.phase !== 'playing') {
+    return err('wrong-phase')
+  }
+
+  if (state.pendingQuestion !== null) {
+    return err('pending-question')
+  }
+
+  if (state.currentPlayer !== askedBy) {
+    return err('not-your-turn')
+  }
+
+  const trimmed = text.trim()
+  if (trimmed.length === 0) {
+    return err('empty-question')
+  }
+
+  return ok({
+    ...state,
+    pendingQuestion: {
+      id: questionId,
+      text: trimmed,
+      askedBy,
+    },
   })
 }
 
@@ -307,6 +346,122 @@ export function answerQuestion(
     ...state,
     pendingQuestion: null,
     currentPlayer: role,
+  })
+}
+
+export function applyRemoteAnswer(
+  state: GameState,
+  questionId: string,
+  answeredBy: PlayerRole,
+): Result<GameState, GameError> {
+  if (state.phase === 'finished') {
+    return err('game-finished')
+  }
+
+  if (state.phase !== 'playing') {
+    return err('wrong-phase')
+  }
+
+  const pending = state.pendingQuestion
+  if (pending === null) {
+    return err('no-pending-question')
+  }
+
+  if (pending.id !== questionId) {
+    return err('no-pending-question')
+  }
+
+  if (answeredBy === pending.askedBy) {
+    return err('not-your-turn')
+  }
+
+  return ok({
+    ...state,
+    pendingQuestion: null,
+    currentPlayer: answeredBy,
+  })
+}
+
+export function validateGuessRequest(
+  state: GameState,
+  role: PlayerRole,
+  characterId: string,
+): Result<GameState, GameError> {
+  const actorError = assertPlayingActor(state, role)
+  if (actorError !== null) {
+    return actorError
+  }
+
+  if (getCharacterById(characterId) === undefined) {
+    return err('invalid-character')
+  }
+
+  return ok(state)
+}
+
+export function resolveGuess(
+  state: GameState,
+  guesserRole: PlayerRole,
+  characterId: string,
+): Result<GameState, GameError> {
+  if (state.phase === 'finished') {
+    return err('game-finished')
+  }
+
+  if (state.phase !== 'playing') {
+    return err('wrong-phase')
+  }
+
+  if (state.currentPlayer !== guesserRole) {
+    return err('not-your-turn')
+  }
+
+  if (state.pendingQuestion !== null) {
+    return err('pending-question')
+  }
+
+  if (getCharacterById(characterId) === undefined) {
+    return err('invalid-character')
+  }
+
+  const answererRole = opponent(guesserRole)
+  const mysteryId = state.players[answererRole].mysteryCharacterId
+  if (mysteryId === null) {
+    return err('mystery-not-selected')
+  }
+
+  const correct = characterId === mysteryId
+
+  return ok({
+    ...state,
+    phase: 'finished',
+    pendingQuestion: null,
+    currentPlayer: null,
+    winner: correct ? guesserRole : answererRole,
+    gameOverReason: correct ? 'correct-guess' : 'wrong-guess',
+  })
+}
+
+export function applyGameOver(
+  state: GameState,
+  winner: PlayerRole,
+  reason: GameOverReason,
+): Result<GameState, GameError> {
+  if (state.phase === 'finished') {
+    return ok(state)
+  }
+
+  if (state.phase !== 'playing') {
+    return err('wrong-phase')
+  }
+
+  return ok({
+    ...state,
+    phase: 'finished',
+    pendingQuestion: null,
+    currentPlayer: null,
+    winner,
+    gameOverReason: reason,
   })
 }
 

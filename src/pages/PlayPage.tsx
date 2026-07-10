@@ -40,6 +40,8 @@ function PlayPage() {
     connectionState,
   })
   const {
+    gameState,
+    phase,
     statusText,
     selectionMode,
     boardKey,
@@ -49,6 +51,22 @@ function PlayPage() {
     coinFlipVisible,
     coinFlipResult,
     sessionError,
+    gameplayMode,
+    canAsk,
+    canAnswer,
+    canGuess,
+    pendingQuestionText,
+    selectedGuessId,
+    gameOverVisible,
+    winnerLabel,
+    submitQuestion,
+    submitAnswer,
+    submitGuess,
+    flipTile,
+    enterGuessMode,
+    exitGuessMode,
+    selectGuessCharacter,
+    playAgain,
   } = useGameSession({
     isHost,
     connectionState,
@@ -59,6 +77,8 @@ function PlayPage() {
   const shareUrl = roomCode ? getShareableUrl(roomCode) : ''
   const connectionLabel = getConnectionStatusLabel(connectionState)
   const displayError = sessionError ?? errorMessage
+  const localRole = isHost ? 'host' : 'guest'
+  const playingPhase = phase === 'playing'
 
   async function copyShareLink() {
     if (!shareUrl) {
@@ -115,6 +135,29 @@ function PlayPage() {
       coinFlipVisible={coinFlipVisible}
       coinFlipResult={coinFlipResult}
       sessionError={sessionError}
+      playingPhase={playingPhase}
+      boardTiles={gameState.players[localRole].boardFlips}
+      guessMode={gameplayMode === 'guess'}
+      selectedGuessId={selectedGuessId}
+      onTileFlip={flipTile}
+      onGuessSelect={selectGuessCharacter}
+      canAsk={canAsk}
+      canAnswer={canAnswer}
+      canGuess={canGuess}
+      gameplayMode={gameplayMode}
+      pendingQuestionText={pendingQuestionText}
+      onSubmitQuestion={submitQuestion}
+      onSubmitAnswer={submitAnswer}
+      onEnterGuessMode={enterGuessMode}
+      onExitGuessMode={exitGuessMode}
+      onConfirmGuess={() => {
+        if (selectedGuessId !== null) {
+          submitGuess(selectedGuessId)
+        }
+      }}
+      gameOverVisible={gameOverVisible}
+      winnerLabel={winnerLabel}
+      onPlayAgain={playAgain}
     />
   )
 }

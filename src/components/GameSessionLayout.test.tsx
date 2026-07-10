@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import GameSessionLayout from './GameSessionLayout'
 
@@ -138,5 +138,63 @@ describe('GameSessionLayout', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Opponent disconnected during game setup.',
     )
+  })
+
+  it('enables Yes/No buttons only for answerer during pending question', () => {
+    const onSubmitAnswer = vi.fn()
+    const { rerender } = render(
+      <GameSessionLayout
+        {...defaultProps}
+        playingPhase
+        statusText="Answer the question"
+        canAnswer
+        pendingQuestionText="Does your person wear glasses?"
+        onSubmitAnswer={onSubmitAnswer}
+      />,
+    )
+
+    const answerSection = screen.getByLabelText('Answer question')
+    const yesButton = within(answerSection).getByRole('button', {
+      name: /^yes$/i,
+    })
+    fireEvent.click(yesButton)
+    expect(onSubmitAnswer).toHaveBeenCalledWith('yes')
+
+    rerender(
+      <GameSessionLayout
+        {...defaultProps}
+        playingPhase
+        statusText="Your turn"
+        canAnswer={false}
+        canAsk
+        pendingQuestionText={null}
+      />,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: /^yes$/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /^no$/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows game over screen with winner text', () => {
+    const onPlayAgain = vi.fn()
+    render(
+      <GameSessionLayout
+        {...defaultProps}
+        playingPhase
+        statusText="Game over"
+        gameOverVisible
+        winnerLabel="You win!"
+        onPlayAgain={onPlayAgain}
+      />,
+    )
+
+    expect(screen.getByLabelText('Game over')).toBeInTheDocument()
+    expect(screen.getByText('You win!')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /play again/i }))
+    expect(onPlayAgain).toHaveBeenCalled()
   })
 })
